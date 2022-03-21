@@ -1,0 +1,43 @@
+{
+  "name": "fit-files",
+  "version": "1.0.0",
+  "description": "",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "lint": "next lint",
+    "start": "next start",
+    "tsn": "yarn ts-node -O '{ \"module\": \"commonjs\" }'",
+    "convert": "yarn tsn ./src/scripts/convert.ts",
+    "swap": "yarn tsn ./src/scripts/swap.ts"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "@fluentui/react": "^8.61.0",
+    "chart.js": "^3.7.1",
+    "chartjs-adapter-date-fns": "^2.0.0",
+    "csv": "^6.0.5",
+    "fs-extra": "^10.0.1",
+    "lodash-es": "^4.17.21",
+    "next": "^12.1.0",
+    "react": "^17.0.2",
+    "react-dom": "^17.0.2",
+    "react-dropzone": "^12.0.4",
+    "swr": "^1.2.2"
+  },
+  "devDependencies": {
+    "@types/fs-extra": "^9.0.13",
+    "@types/lodash-es": "^4.17.6",
+    "@types/node": "^14.0.0",
+    "@types/react": "^17.0.40",
+    "@types/react-dom": "^17.0.13",
+    "eslint": "^8.11.0",
+    "eslint-config-next": "^12.1.0",
+    "prettier": "2.5.1",
+    "ts-node": "^10.7.0",
+    "typescript": "4.6.2"
+  }
+}

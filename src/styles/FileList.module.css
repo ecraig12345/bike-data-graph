@@ -1,0 +1,15 @@
+.root {
+  width: 100%;
+}
+
+.root * {
+  line-height: 1.5em;
+}
+
+.root ul {
+  margin-top: 0.2em;
+}
+
+.root summary {
+  cursor: pointer;
+}

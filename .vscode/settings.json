@@ -1,0 +1,14 @@
+{
+  "editor.formatOnSave": true,
+  "files.trimTrailingWhitespace": true,
+  "files.insertFinalNewline": true,
+  "editor.renderWhitespace": "all",
+  "editor.insertSpaces": true,
+  "editor.tabSize": 2,
+  "files.exclude": {
+    "*.app": true
+  },
+  "search.exclude": {
+    "FitSDK*": true
+  }
+}
