@@ -13,13 +13,13 @@ export default function Home() {
   return (
     <div className={styles.container}>
       <Head>
-        <title>chart thing</title>
-        <meta name="description" content="chart thing" />
+        <title>Bike data comparison</title>
+        <meta name="description" content="Bike data comparison" />
         <link rel="icon" href="/favicon.ico" />
       </Head>
 
       <main className={styles.main}>
-        <h1 className={styles.title}>chart thing</h1>
+        <h1 className={styles.title}>Bike data comparison</h1>
 
         {filePath ? (
           <ChartStuff filePath={filePath} />

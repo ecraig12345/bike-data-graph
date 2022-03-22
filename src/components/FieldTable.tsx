@@ -23,19 +23,10 @@ const FieldTableRow: React.FunctionComponent<FieldTableRowProps> = (props) => {
   return (
     <tr>
       <th>{name}</th>
+      <td>{moveUp && <IconButton onClick={moveUp} iconProps={upIconProps} />}</td>
+      <td>{moveDown && <IconButton onClick={moveDown} iconProps={downIconProps} />}</td>
       <td>
-        <IconButton disabled={!moveUp} onClick={moveUp} aria-label="up" iconProps={upIconProps} />
-      </td>
-      <td>
-        <IconButton
-          disabled={!moveDown}
-          onClick={moveDown}
-          aria-label="down"
-          iconProps={downIconProps}
-        />
-      </td>
-      <td>
-        <IconButton onClick={remove} aria-label="remove" iconProps={removeIconProps} />
+        <IconButton onClick={remove} iconProps={removeIconProps} />
       </td>
     </tr>
   );

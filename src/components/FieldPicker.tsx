@@ -17,7 +17,10 @@ export type FieldPickerProps = {
 
 type DropdownOnChange = Required<IDropdownProps>['onChange'];
 
-const dropdownStyles: Partial<IDropdownStyles> = { dropdown: { width: 300 } };
+const dropdownStyles: Partial<IDropdownStyles> = {
+  dropdown: { width: 300 },
+  root: { display: 'inline-block', marginRight: 30 },
+};
 
 const FieldPicker: React.FunctionComponent<FieldPickerProps> = (props) => {
   const { allFields, fields, timeField, setTimeField, setFields } = props;
@@ -47,18 +50,18 @@ const FieldPicker: React.FunctionComponent<FieldPickerProps> = (props) => {
   return (
     <div>
       <Dropdown
-        label="Time scale field (MUST contain string or milliseconds of Date)"
-        options={dropdownOptions}
-        onChange={onTimeDropdownChange}
-        selectedKey={timeField}
-        styles={dropdownStyles}
-      />
-      <Dropdown
         label="Y-axis fields"
         multiSelect
         options={dropdownOptions}
         onChange={onFieldsDropdownChange}
         selectedKeys={fields}
+        styles={dropdownStyles}
+      />
+      <Dropdown
+        label="Time scale field (MUST contain string or milliseconds of Date)"
+        options={dropdownOptions}
+        onChange={onTimeDropdownChange}
+        selectedKey={timeField}
         styles={dropdownStyles}
       />
       <br />
