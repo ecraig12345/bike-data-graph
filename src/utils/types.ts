@@ -1,6 +1,7 @@
 /** converted data from a fit file, with roughly original field names */
 export type ConvertedFitData = {
-  timestamp: Date;
+  /** string of Date object */
+  timestamp: string;
   /** hh:mm:ss */
   time: string;
   duration: string;
@@ -27,7 +28,7 @@ export type FilesDataFolder = {
 
 export type FilesData = FilesDataFolder[];
 
-export type ReadFileData = Record<string, string | number | Date>[];
+export type ReadFileData = Record<string, string | number>[];
 
 export type ResponseData<Data> = { data: Data };
 

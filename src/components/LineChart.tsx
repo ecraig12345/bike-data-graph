@@ -12,14 +12,16 @@ import 'chartjs-adapter-date-fns';
 
 // inspiration from https://github.com/reactchartjs/react-chartjs-2
 
-export interface ChartProps<TData = DefaultDataPoint<'line'>, TLabel = unknown>
-  extends React.CanvasHTMLAttributes<HTMLCanvasElement> {
+export type ChartProps<
+  TData = DefaultDataPoint<'line'>,
+  TLabel = unknown
+> = React.CanvasHTMLAttributes<HTMLCanvasElement> & {
   data: ChartData<'line', TData, TLabel>;
   options?: ChartOptions<'line'>;
   plugins?: Plugin<'line'>[];
   datasetIdKey?: string;
   fallbackContent?: React.ReactNode;
-}
+};
 
 function LineChart<TData = DefaultDataPoint<'line'>, TLabel = unknown>(
   props: ChartProps<TData, TLabel>
