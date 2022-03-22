@@ -8,7 +8,11 @@ import DropZone from '../components/DropZone';
 import styles from '../styles/Home.module.css';
 import { useChartData } from '../utils/chart/useChartData';
 
-const LineChart = dynamic(() => import('../components/LineChart'));
+const LineChart = dynamic(
+  () => import('../components/LineChart'),
+  // a dep of the zoom plugin tries to access window on import
+  { ssr: false }
+);
 
 const fields = ['power', 'Power2'];
 

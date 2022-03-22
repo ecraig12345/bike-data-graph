@@ -3,6 +3,7 @@ import useSWR from 'swr';
 import type { ChartData, ChartOptions } from 'chart.js';
 import type { ConvertedFitData, ReadFileData } from '../types';
 
+// https://www.w3schools.com/colors/colors_groups.asp
 const colors = ['dodgerblue', 'darkorchid', 'limegreen', 'darkorange', 'deeppink'];
 const getColor = (i: number) => colors[i % colors.length];
 
@@ -41,6 +42,9 @@ export function useChartData(filePath: string | undefined, fields: string[]) {
         label: field,
         backgroundColor: getColor(i),
         borderColor: getColor(i),
+        borderWidth: 2,
+        pointRadius: 1,
+        pointHitRadius: 3,
         // TODO not a good assumption of data format
         data: (data as ConvertedFitData[]).map((r) => ({
           x: new Date(r.timestamp).getTime(),
@@ -54,6 +58,7 @@ export function useChartData(filePath: string | undefined, fields: string[]) {
   const options = React.useMemo(
     (): ChartOptions<'line'> => ({
       animation: false,
+      normalized: true,
       parsing: false,
       scales: {
         x: {
@@ -61,6 +66,12 @@ export function useChartData(filePath: string | undefined, fields: string[]) {
         },
       },
       plugins: {
+        // decimation: {
+        //   enabled: true,
+        //   algorithm: 'lttb',
+        //   samples: 250,
+        //   threshold: 250,
+        // },
         zoom: {
           limits: {
             // TODO not working as I expect

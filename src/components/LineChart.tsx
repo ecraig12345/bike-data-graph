@@ -5,6 +5,7 @@ import { cloneData, setDatasets } from '../utils/chart/chartUtils';
 // TODO don't import everything + manually register only what's needed
 import 'chart.js/auto';
 import { Chart } from 'chart.js';
+import zoomPlugin from 'chartjs-plugin-zoom';
 
 // https://github.com/chartjs/chartjs-adapter-date-fns
 import 'chartjs-adapter-date-fns';
@@ -23,30 +24,18 @@ export interface ChartProps<TData = DefaultDataPoint<'line'>, TLabel = unknown>
 function LineChart<TData = DefaultDataPoint<'line'>, TLabel = unknown>(
   props: ChartProps<TData, TLabel>
 ) {
-  const {
-    height = 400,
-    width = 600,
-    datasetIdKey,
-    data,
-    options,
-    plugins,
-    fallbackContent,
-    ...rest
-  } = props;
+  const { datasetIdKey, data, options, plugins, fallbackContent, ...rest } = props;
   const canvasRef = React.useRef<HTMLCanvasElement>(null);
   const chartRef = React.useRef<Chart<'line', TData, TLabel> | null>(null);
 
   React.useEffect(() => {
-    // delay import this because a dep expects window to be available on import
-    import('chartjs-plugin-zoom').then((zoomPlugin) => {
-      Chart.register(zoomPlugin.default);
+    Chart.register(zoomPlugin);
 
-      chartRef.current = new Chart(canvasRef.current!, {
-        data: cloneData(data, datasetIdKey),
-        options,
-        plugins,
-        type: 'line',
-      });
+    chartRef.current = new Chart(canvasRef.current!, {
+      data: cloneData(data, datasetIdKey),
+      options,
+      plugins,
+      type: 'line',
     });
     return () => {
       chartRef.current?.destroy();
@@ -78,7 +67,7 @@ function LineChart<TData = DefaultDataPoint<'line'>, TLabel = unknown>(
   }, [options, data.labels, data.datasets]);
 
   return (
-    <canvas ref={canvasRef} role="img" height={height} width={width} {...rest}>
+    <canvas ref={canvasRef} role="img" {...rest}>
       {fallbackContent}
     </canvas>
   );
