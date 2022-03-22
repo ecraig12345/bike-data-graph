@@ -2,11 +2,22 @@ import React from 'react';
 import type { ChartData, ChartOptions, DefaultDataPoint, Plugin } from 'chart.js';
 import { cloneData, setDatasets } from '../utils/chart/chartUtils';
 
-// TODO don't import everything + manually register only what's needed
-import 'chart.js/auto';
-import { Chart } from 'chart.js';
-import zoomPlugin from 'chartjs-plugin-zoom';
+import {
+  Chart,
+  LineController,
+  LineElement,
+  LinearScale,
+  PointElement,
+  TimeScale,
+  Decimation,
+  Legend,
+  Tooltip,
+  Title,
+  SubTitle,
+} from 'chart.js';
 
+// https://www.chartjs.org/chartjs-plugin-zoom/guide/options.html
+import zoomPlugin from 'chartjs-plugin-zoom';
 // https://github.com/chartjs/chartjs-adapter-date-fns
 import 'chartjs-adapter-date-fns';
 
@@ -31,7 +42,19 @@ function LineChart<TData = DefaultDataPoint<'line'>, TLabel = unknown>(
   const chartRef = React.useRef<Chart<'line', TData, TLabel> | null>(null);
 
   React.useEffect(() => {
-    Chart.register(zoomPlugin);
+    Chart.register(
+      LineController,
+      LineElement,
+      LinearScale,
+      PointElement,
+      TimeScale,
+      Decimation,
+      Legend,
+      Tooltip,
+      Title,
+      SubTitle,
+      zoomPlugin
+    );
 
     chartRef.current = new Chart(canvasRef.current!, {
       data: cloneData(data, datasetIdKey),

@@ -29,7 +29,7 @@ const ChartStuff: React.FunctionComponent<ChartStuffProps> = (props) => {
     }
   }, [allFields]);
 
-  const { data, options } = useChartProps(rawData, timeField, fields);
+  const { data, options } = useChartProps(filePath, rawData, timeField, fields);
 
   if (error || !(data && fields?.length && timeField)) {
     return <>{error}</>;

@@ -9,6 +9,7 @@ const getColor = (i: number) => colors[i % colors.length];
 const yTickStep = 50;
 
 export function useChartProps(
+  filePath: string,
   allData: ReadFileData | undefined,
   timeField: string | undefined,
   fields: string[] | undefined
@@ -54,6 +55,13 @@ export function useChartProps(
       scales: {
         x: {
           type: 'time',
+          time: {
+            minUnit: 'minute',
+          },
+          ticks: {
+            maxRotation: 50,
+            minRotation: 50,
+          },
         },
         y: {
           type: 'linear',
@@ -69,12 +77,31 @@ export function useChartProps(
         //   samples: 250,
         //   threshold: 250,
         // },
+        legend: {
+          position: 'bottom',
+        },
+        title: {
+          display: true,
+          text: filePath,
+          font: { size: 24 },
+        },
+        subtitle: {
+          display: true,
+          text: ['Pinch, scroll, or click and drag to zoom. Shift+drag to pan.', ''],
+          font: { size: 14 },
+        },
         zoom: {
           limits: {
-            // can't zoom out beyond original data set
-            x: { min: 'original', max: 'original' },
+            // can't zoom out beyond original data set or in beyond 3 minutes
+            x: { min: 'original', max: 'original', minRange: 1000 * 60 * 3 },
+          },
+          pan: {
+            enabled: true,
+            mode: 'x',
+            modifierKey: 'shift',
           },
           zoom: {
+            drag: { enabled: true },
             wheel: { enabled: true },
             pinch: { enabled: true },
             mode: 'x',
@@ -83,7 +110,7 @@ export function useChartProps(
       },
     };
     return result;
-  }, [yMax]);
+  }, [yMax, filePath]);
 
   return { data, options };
 }
