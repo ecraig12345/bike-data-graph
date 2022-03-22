@@ -31,7 +31,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
   }
 
   try {
-    const fileContent = shouldConvert ? await convert(filePath) : await readCsv(filePath, true);
+    const fileContent = shouldConvert
+      ? await convert(filePath, 'timestamp')
+      : await readCsv(filePath, true, 'timestamp');
 
     res.status(200).json({ data: fileContent as ReadFileData });
   } catch (err) {

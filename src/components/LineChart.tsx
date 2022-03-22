@@ -1,7 +1,10 @@
 import React from 'react';
-import type { Chart, ChartData, ChartOptions, DefaultDataPoint, Plugin } from 'chart.js';
-import { ChartContext } from '../utils/chart/ChartContext';
+import type { ChartData, ChartOptions, DefaultDataPoint, Plugin } from 'chart.js';
 import { cloneData, setDatasets } from '../utils/chart/chartUtils';
+
+// TODO don't import everything + manually register only what's needed
+import 'chart.js/auto';
+import { Chart } from 'chart.js';
 
 // https://github.com/chartjs/chartjs-adapter-date-fns
 import 'chartjs-adapter-date-fns';
@@ -32,23 +35,25 @@ function LineChart<TData = DefaultDataPoint<'line'>, TLabel = unknown>(
   } = props;
   const canvasRef = React.useRef<HTMLCanvasElement>(null);
   const chartRef = React.useRef<Chart<'line', TData, TLabel> | null>(null);
-  const ChartJS = React.useContext(ChartContext);
 
   React.useEffect(() => {
-    if (ChartJS) {
-      chartRef.current = new ChartJS(canvasRef.current!, {
+    // delay import this because a dep expects window to be available on import
+    import('chartjs-plugin-zoom').then((zoomPlugin) => {
+      Chart.register(zoomPlugin.default);
+
+      chartRef.current = new Chart(canvasRef.current!, {
         data: cloneData(data, datasetIdKey),
         options,
         plugins,
         type: 'line',
       });
-      return () => {
-        chartRef.current?.destroy();
-        chartRef.current = null;
-      };
-    }
+    });
+    return () => {
+      chartRef.current?.destroy();
+      chartRef.current = null;
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps -- only run once
-  }, [ChartJS]);
+  }, []);
 
   React.useEffect(() => {
     if (chartRef.current && options) {

@@ -25,7 +25,7 @@ export function readCsvStream(filePath: string, convertNumbers?: boolean): Trans
         columns: true,
         skipEmptyLines: true,
         relaxColumnCountLess: true,
-        toLine: 20,
+        toLine: 1000,
       })
     )
     .pipe(transform((record: any) => (convertNumbers ? mapValues(record, maybeToNumber) : record)));
@@ -35,11 +35,13 @@ export function readCsvStream(filePath: string, convertNumbers?: boolean): Trans
  * Read a CSV file with column headers.
  * @param filePath File path to convert
  * @param convertNumbers Whether to convert strings that appear to be numbers
+ * @param sortByField Optional field to sort the result by
  * @returns Array of record objects, with column headers as keys
  */
-export async function readCsv<T>(
+export function readCsv<T>(
   filePath: string,
-  convertNumbers?: boolean
+  convertNumbers?: boolean,
+  sortByField?: keyof T
 ): Promise<Record<string, T>[]> {
-  return streamToArray(readCsvStream(filePath, convertNumbers));
+  return streamToArray(readCsvStream(filePath, convertNumbers), sortByField as string | undefined);
 }
