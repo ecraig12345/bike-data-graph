@@ -25,7 +25,6 @@ export function readCsvStream(filePath: string, convertNumbers?: boolean): Trans
         columns: true,
         skipEmptyLines: true,
         relaxColumnCountLess: true,
-        toLine: 1000,
       })
     )
     .pipe(transform((record: any) => (convertNumbers ? mapValues(record, maybeToNumber) : record)));
