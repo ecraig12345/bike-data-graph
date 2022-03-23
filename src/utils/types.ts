@@ -1,24 +1,22 @@
 /** converted data from a fit file, with roughly original field names */
 export type ConvertedFitData = {
-  /** string of Date object */
-  timestamp: string;
+  /** epoch seconds */
+  timestamp: number;
   /** hh:mm:ss */
   time: string;
+  /** hh:mm:ss */
   duration: string;
-  lat: number;
-  long: number;
-  /** mi */
-  distance: number;
-  /** ft */
-  altitude: number;
-  /** mi/hr */
-  speed: number;
-  cadence: number;
-  /** F */
-  temperature: number;
-  power: number;
-  Power2: number;
-  Cadence2: number;
+  'position_lat[deg]': number;
+  'position_long[deg]': number;
+  'distance[mi]': number;
+  'altitude[ft]': number;
+  'speed[mph]': number;
+  'cadence[rpm]'?: number;
+  'heart_rate[bpm]': number;
+  'temperature[F]': number;
+  'power[W]': number;
+  'power2[W]'?: number;
+  'cadence2[rpm]'?: number;
 };
 
 export type FilesDataFolder = {

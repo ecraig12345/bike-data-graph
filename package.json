@@ -8,13 +8,14 @@
     "build": "next build",
     "lint": "next lint",
     "start": "next start",
-    "tsn": "yarn ts-node -O '{ \"module\": \"commonjs\" }'",
+    "tsn": "NODE_OPTIONS='--experimental-specifier-resolution=node' yarn ts-node-esm",
     "convert": "yarn tsn ./src/scripts/convert.ts",
     "swap": "yarn tsn ./src/scripts/swap.ts"
   },
   "keywords": [],
   "author": "",
   "license": "MIT",
+  "type": "module",
   "dependencies": {
     "@fluentui/react": "^8.62.1",
     "@fluentui/react-hooks": "^8.5.3",

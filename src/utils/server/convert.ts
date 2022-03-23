@@ -3,43 +3,7 @@ import type { Transformer } from 'stream-transform';
 import { readCsvStream } from './readCsv';
 import { streamToArray } from './streamToArray';
 import { ConvertedFitData } from '../types';
-
-const toNumber = (s: string) => Number(s);
-// garmin timestamps use this weird offset
-const offsetTime = new Date(1989, 11, 31).getTime();
-const msInHour = 60 * 60 * 1000;
-// and they're recorded in local time (JS Date needs UTC)
-const utcOffset = -8 * msInHour;
-
-const conversions: Record<string, (s: string, fieldName: string) => unknown> = {
-  s: (s: string) => new Date(Number(s) * 1000 + offsetTime + utcOffset),
-  semicircles: (s: string) => (Number(s) * 180) / Math.pow(2, 31),
-  m: (s: string, fieldName: string) =>
-    fieldName.includes('distance') ? Number(s) * 0.000621371 : Number(s) * 3.28084,
-  'm/s': (s: string) => Number(s) * 2.23694,
-  watts: toNumber,
-  bpm: toNumber,
-  C: (s: string) => (Number(s) * 9) / 5 + 32,
-  W: toNumber,
-  rpm: toNumber,
-};
-
-// record.timestamp[s]
-// record.position_lat[semicircles]
-// record.position_long[semicircles]
-// record.distance[m]
-// record.accumulated_power[watts]
-// record.altitude[m]
-// record.speed[m/s]
-// record.power[watts]
-// record.unknown
-// record.heart_rate[bpm]
-// record.temperature[C]
-// record.enhanced_altitude[m]
-// record.enhanced_speed[m/s]
-// record.developer.0.Power2[W]
-// record.developer.0.Cadence2[rpm]
-// "enhanced" is irrelevant (wider int)
+import { convertField, getFieldDescriptionParts } from '../conversions';
 
 type State = {
   warnedUnits: Set<string>;
@@ -47,16 +11,39 @@ type State = {
   startTime: number;
 };
 
+function addTimeInfo(data: Record<string, any>, state: State) {
+  const timestamp = data.timestamp as Date;
+  if (!state.startTime) {
+    const startDate = new Date(timestamp);
+    startDate.setMinutes(startDate.getMinutes() - startDate.getTimezoneOffset());
+    state.startTime = startDate.getTime();
+  }
+
+  const format = '2-digit' as const;
+  const options = { hour12: false, minute: format, second: format, hour: format };
+  data.time = timestamp.toLocaleTimeString('en-US', options);
+  data.duration = new Date(timestamp.getTime() - state.startTime)
+    .toLocaleTimeString('en-US', options)
+    .replace(/^24/, '00'); // what
+}
+
 function transformRecord(record: Record<string, string>, state: State): ConvertedFitData {
   const { warnedFields, warnedUnits } = state;
   const data: Record<string, any> = {};
 
-  Object.entries(record).forEach(([field, value], i) => {
-    if (!field || field.startsWith('record.enhanced_')) {
-      return; // ignore enhanced data, it's just wider int width of regular value
+  Object.entries(record).forEach((entry, i) => {
+    const field = entry[0];
+    const value = entry[1] || '0'; // interpret empty string as 0
+    // Ignore:
+    // - empty field name: can happen due to column count mismatch
+    // - "enhanced" data: it's just wider int width of regular value (not relevant for bike data)
+    // - accumulated power: how is this useful?
+    if (!field || field.startsWith('record.enhanced_') || field.includes('accumulated_power')) {
+      return;
     }
-    const match = field.trim().match(/^(?:record\.)?(developer\.\d+\.)?(\w+)(?:\[(.*?)\])?$/);
-    if (!match) {
+
+    let [fieldName, units = ''] = getFieldDescriptionParts(field) || [];
+    if (!fieldName) {
       if (!warnedFields.has(field)) {
         console.error(`could not determine field name: "${field}"`);
         warnedFields.add(field);
@@ -64,57 +51,60 @@ function transformRecord(record: Record<string, string>, state: State): Converte
       return;
     }
 
-    let [, developer, fieldName, units] = match;
-    fieldName = fieldName.replace(/^position_/, '');
+    const [convertedValue, convertedUnits = ''] =
+      convertField([fieldName, units], value || '0') || [];
 
-    if (fieldName in data) {
-      if (!warnedFields.has(fieldName)) {
+    if (units && !convertedUnits && !warnedUnits.has(units)) {
+      console.warn(`unknown units (will not convert): "${units}"`);
+      warnedUnits.add(units);
+    }
+
+    // add converted units to the final field name (except timestamp, we'll modify that more later)
+    let newFieldName =
+      fieldName === 'timestamp'
+        ? 'timestamp'
+        : fieldName.toLowerCase() + (convertedUnits || units ? `[${convertedUnits || units}]` : '');
+
+    if (newFieldName in data) {
+      // already found a value for this field--rename it
+      const modifiedFieldName = newFieldName.replace(fieldName, `${fieldName}_${i}`);
+      if (!warnedFields.has(newFieldName)) {
         console.error(
-          `found muliple values for field "${fieldName}"; will save as "${fieldName}_${i}"`
+          `found muliple values for field "${newFieldName}" (from original "${field}"); ` +
+            `will save as "${modifiedFieldName}"`
         );
-        warnedFields.add(fieldName);
+        warnedFields.add(newFieldName);
       }
-      fieldName = `${fieldName}_${i}`;
+      newFieldName = modifiedFieldName;
     }
 
-    if (!value) {
-      data[fieldName] = value;
-    } else if (units && conversions[units]) {
-      data[fieldName] = conversions[units](value, fieldName);
-    } else {
-      if (units && !warnedUnits.has(units)) {
-        console.error(`unknown units (will not convert): "${units}"`);
-        warnedUnits.add(units);
-      }
-      data[fieldName] = value;
-    }
+    data[newFieldName] = convertedValue ?? value;
 
     if (fieldName === 'timestamp') {
-      const timestamp = data.timestamp as Date;
-      if (!state.startTime) {
-        state.startTime = timestamp.getTime() + utcOffset;
-      }
-
-      const format = '2-digit' as const;
-      const options = { hour12: false, minute: format, second: format, hour: format };
-      data.time = timestamp.toLocaleTimeString('en-US', options);
-      data.duration = new Date(timestamp.getTime() - state.startTime)
-        .toLocaleTimeString('en-US', options)
-        .replace(/^24/, '00'); // what
+      addTimeInfo(data, state);
     }
   });
 
   return data as ConvertedFitData;
 }
 
-export function convertStream(filePath: string): Transformer {
+/**
+ * Convert a CSV file from the records_data format generated by the FIT SDK's conversion tool
+ * and return a stream of records.
+ * @param filePath File to read
+ * @param limit Limit on number of lines to read
+ */
+export function convertStream(filePath: string, limit?: number): Transformer {
   const state: State = { warnedFields: new Set(), warnedUnits: new Set(), startTime: 0 };
 
-  return readCsvStream(filePath).pipe(transform((record: any) => transformRecord(record, state)));
+  return readCsvStream(filePath, false, limit).pipe(
+    transform((record: any) => transformRecord(record, state))
+  );
 }
 
 /**
- * Convert a file from the records_data format generated by the FIT SDK's conversion tool
+ * Convert a CSV file from the records_data format generated by the FIT SDK's conversion tool
+ * and return an array of records.
  * @param filePath File to read
  * @param sortByField Optional field to sort the result by
  */

@@ -1,6 +1,6 @@
 import { parse, transform } from 'csv';
 import type { Transformer } from 'stream-transform';
-import * as fs from 'fs-extra';
+import fs from 'fs-extra';
 import mapValues from 'lodash-es/mapValues';
 import { streamToArray } from './streamToArray';
 
@@ -14,9 +14,14 @@ function maybeToNumber(v: any) {
  * Read a CSV file with column headers.
  * @param filePath File path to convert
  * @param convertNumbers Whether to convert strings that appear to be numbers
+ * @param limit Limit on number of lines to read
  * @returns Stream of record objects, with column headers as keys
  */
-export function readCsvStream(filePath: string, convertNumbers?: boolean): Transformer {
+export function readCsvStream(
+  filePath: string,
+  convertNumbers?: boolean,
+  limit?: number
+): Transformer {
   const inStream = fs.createReadStream(filePath);
 
   return inStream
@@ -25,6 +30,7 @@ export function readCsvStream(filePath: string, convertNumbers?: boolean): Trans
         columns: true,
         skipEmptyLines: true,
         relaxColumnCountLess: true,
+        ...(limit && { toLine: limit }),
       })
     )
     .pipe(transform((record: any) => (convertNumbers ? mapValues(record, maybeToNumber) : record)));

@@ -1,12 +1,16 @@
 import { stringify } from 'csv';
 import { Options as StringifyOptions } from 'csv-stringify';
-// import { parse as parseSync } from 'csv/sync';
-import * as fs from 'fs';
+import fs from 'fs';
 import { convert, convertStream } from '../utils/server/convert';
 
-// generate({ seed: 1, length: 20, columns: ['ascii', 'int'] });
-
-const [inFile, outFile] = process.argv.slice(2);
+const args = process.argv.slice(2);
+let limit: number | undefined;
+if (args[0] === '--limit') {
+  args.shift();
+  limit = Number(args.shift());
+}
+const inFile = args.shift()!;
+const outFile = args.shift();
 const outStream = outFile ? fs.createWriteStream(outFile) : process.stdout;
 
 async function run() {
@@ -16,7 +20,7 @@ async function run() {
 }
 // run();
 
-convertStream(inFile)
+convertStream(inFile, limit)
   .pipe(
     stringify({
       header: true,
@@ -24,15 +28,18 @@ convertStream(inFile)
         'timestamp',
         'time',
         'duration',
-        'lat',
-        'long',
-        'distance',
-        'altitude',
-        'speed',
-        'Cadence2',
-        'heart_rate',
-        { key: 'power', header: 'power_powerpod' },
-        { key: 'Power2', header: 'power_stages' },
+        'position_lat[deg]',
+        'position_long[deg]',
+        'distance[mi]',
+        'altitude[ft]',
+        'speed[mph]',
+        'cadence[rpm]',
+        'cadence2[rpm]',
+        'heart_rate[bpm]',
+        'power[W]',
+        'power2[W]',
+        // { key: 'power', header: 'power_powerpod' },
+        // { key: 'Power2', header: 'power_stages' },
       ] as StringifyOptions['columns'],
     })
   )
