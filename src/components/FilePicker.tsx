@@ -6,12 +6,10 @@ import DropZone from './DropZone';
 import { State, useStore } from '../utils/useStore';
 
 const lastFileErrorSelector = (s: State) => s.lastFileError;
-const fetchFileSelector = (s: State) => s.fetchFile;
 
-const FilePicker: React.FunctionComponent = (props) => {
+const FilePicker: React.FunctionComponent = () => {
   const [listFiles, { toggle: toggleListFiles }] = useBoolean(true);
   const lastFileError = useStore(lastFileErrorSelector);
-  const fetchFile = useStore(fetchFileSelector);
 
   return (
     <>
@@ -22,7 +20,7 @@ const FilePicker: React.FunctionComponent = (props) => {
         onChange={toggleListFiles}
         id="toggle1"
       />
-      {listFiles ? <FileList onFileSelected={fetchFile} /> : <DropZone />}
+      {listFiles ? <FileList /> : <DropZone />}
       {lastFileError && `Error loading "${lastFileError.filePath}": ${lastFileError.error}`}
     </>
   );
