@@ -5,6 +5,8 @@ import { Series, FileInfo } from './types';
 export type FetchFileData = {
   /** file data and basic info */
   fileInfo: FileInfo;
+  /** timestamp field name, if field with the default expected name was present */
+  timeField?: string;
   /** default series if fields with expected names are present (`timestamp`, `power*`) */
   series?: Series[];
 };
@@ -42,7 +44,7 @@ export async function fetchFile(filePath: string): Promise<FetchFileData | { err
       series = graphFields.map((f) => ({ filePath, yField: f, color: nextColor() }));
     }
 
-    return { fileInfo: { filePath, displayName, rawData, allFields, timeField }, series };
+    return { fileInfo: { filePath, displayName, rawData, allFields }, timeField, series };
   } catch (err) {
     console.error('Error processing data', (err as Error).stack || err);
     return { error: `Error processing data: ${err}` };

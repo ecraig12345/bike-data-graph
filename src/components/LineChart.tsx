@@ -26,7 +26,7 @@ import 'chartjs-adapter-date-fns';
 
 // inspiration from https://github.com/reactchartjs/react-chartjs-2
 
-export type ChartProps<
+export type LineChartProps<
   TData = DefaultDataPoint<'line'>,
   TLabel = unknown
 > = React.CanvasHTMLAttributes<HTMLCanvasElement> & {
@@ -43,7 +43,7 @@ export type ChartProps<
 };
 
 function LineChart<TData = DefaultDataPoint<'line'>, TLabel = unknown>(
-  props: ChartProps<TData, TLabel>
+  props: LineChartProps<TData, TLabel>
 ) {
   const { datasetIdKey, data, options, plugins, fallbackContent, ...rest } = props;
   const canvasRef = React.useRef<HTMLCanvasElement>(null);

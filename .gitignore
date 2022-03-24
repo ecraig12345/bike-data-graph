@@ -1,6 +1,7 @@
 /data/
 /fit to csv.app/
 /FitSDK*
+/plotting
 
 # dependencies
 /node_modules

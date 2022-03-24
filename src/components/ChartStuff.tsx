@@ -1,8 +1,10 @@
 import React from 'react';
 import dynamic from 'next/dynamic';
-import type { ChartData, ChartDataset, ChartOptions, ScatterDataPoint } from 'chart.js';
+import type { ChartDataset, ChartOptions, ScatterDataPoint } from 'chart.js';
 import { State, useStore } from '../utils/useStore';
 import FieldPicker from './FieldPicker';
+import { FilePath, Series } from '../utils/types';
+import type { LineChartProps } from './LineChart';
 
 const LineChart = dynamic(
   () => import('./LineChart'),
@@ -12,116 +14,224 @@ const LineChart = dynamic(
 
 const yTickStep = 50;
 
-const filesSelector = (s: State) => s.files;
+const timeFieldsSelector = (s: State) => s.timeFields;
 const seriesSelector = (s: State) => s.series;
 
-const ChartStuff: React.FunctionComponent = () => {
-  const files = useStore(filesSelector);
-  const series = useStore(seriesSelector);
+/** Time series data: field name and values from a particular file */
+type TimeSeriesData = { fieldName: string; values: number[] };
+/** Map from file path to time series data */
+type TimeSeriesRecord = Record<FilePath, TimeSeriesData>;
+/** Complete data points for a particular series */
+type SeriesData = {
+  /** uniquely identifies the series, including file path, y field, time field */
+  key: string;
+  /**
+   * for identifying the corresponding Series object (it's not saved here b/c it might have
+   * other updates that don't affect the data calculation)
+   */
+  seriesKey: string;
+  /** x/y data points for the series */
+  data: ScatterDataPoint[];
+  /** max y value in this series */
+  yMax: number;
+};
 
-  // TODO more granular calculations?
-  // should see how much it slows when changing fields with larger data sets.
-  const { data, yMax } = React.useMemo(() => {
-    let yMax = 0;
-    const datasets: ChartDataset<'line', ScatterDataPoint[]>[] = series
-      .filter((d) => !!files[d.filePath]?.timeField)
-      .map(({ yField, filePath, color }, i) => {
-        const { timeField, rawData } = files[filePath];
-        return {
-          label: yField,
-          backgroundColor: color,
-          borderColor: color,
-          borderWidth: 2,
-          pointRadius: 1,
-          pointHitRadius: 3,
-          data: rawData.map((r) => {
-            const d = {
-              x: new Date(r[timeField!]).getTime(),
-              y: Number(r[yField]),
-            };
-            yMax = Math.max(yMax, d.y);
-            return d;
-          }),
+/**
+ * get a ref with cached time series values, updating when files and/or time fields update
+ * (a more tailored approach to memoizing and recalculating)
+ */
+function useTimeSeries() {
+  const timeFields = useStore(timeFieldsSelector);
+  const timeFieldsKey = React.useMemo(() => JSON.stringify(timeFields), [timeFields]);
+
+  // map from file path to cached time series data
+  const timeSeries = React.useRef<TimeSeriesRecord>({});
+
+  React.useEffect(() => {
+    const { files } = useStore.getState(); // don't notify of files updates
+    const oldTimeSeries = timeSeries.current;
+    const newTimeSeries: typeof oldTimeSeries = {};
+
+    for (const [filePath, timeField] of Object.entries(timeFields)) {
+      if (oldTimeSeries[filePath]?.fieldName === timeField) {
+        // same time field name => don't re-calculate (the raw data never changes)
+        newTimeSeries[filePath] = oldTimeSeries[filePath];
+      } else {
+        // new file or newly-set time field => calculate
+        newTimeSeries[filePath] = {
+          fieldName: timeField,
+          values: files[filePath].rawData.map((r) => new Date(r[timeField]).getTime()),
         };
-      });
-
-    const data: ChartData<'line', ScatterDataPoint[]> = { datasets };
-    return datasets.length ? { data, yMax } : {};
-  }, [files, series]);
-
-  // TODO don't pull from just one file
-  const displayName = Object.values(files)[0]?.displayName;
-
-  const options = React.useMemo(() => {
-    if (!yMax) {
-      return undefined;
+      }
     }
 
-    const yBound = yMax + (yTickStep - (yMax % yTickStep));
+    timeSeries.current = newTimeSeries;
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- only recalculate on relevant updates
+  }, [timeFieldsKey]);
 
-    const result: ChartOptions<'line'> = {
-      animation: false,
-      normalized: true,
-      parsing: false,
-      scales: {
-        x: {
-          type: 'time',
-          time: { minUnit: 'minute' },
-          // keep rotation consistent while zooming
-          ticks: { maxRotation: 45, minRotation: 45 },
-        },
-        y: {
-          type: 'linear',
-          // Specify max so the axis doesn't change scale when zooming
-          max: yBound,
-          ticks: { stepSize: yTickStep },
-        },
+  return timeSeries;
+}
+
+/** get a key for a series object INCLUDING time data */
+function getCompleteSeriesKey(ser: Series, timeFields: Record<FilePath, string>) {
+  return JSON.stringify([ser.filePath, ser.yField, timeFields[ser.filePath]]);
+}
+/** get a key for a series object NOT including time data */
+function getSeriesKey(ser: Series) {
+  return JSON.stringify([ser.filePath, ser.yField]);
+}
+
+/** get a ref with cached list of series points and maxes, updating when series, files, or time fields update */
+function useSeriesData() {
+  const series = useStore(seriesSelector);
+  const timeFields = useStore(timeFieldsSelector);
+  const timeSeries = useTimeSeries();
+  // series that have a corresponding time field set
+  const readySeries = React.useMemo(
+    () => series.filter((s) => !!timeFields[s.filePath]),
+    [series, timeFields]
+  );
+  const seriesKey = React.useMemo(
+    () => JSON.stringify(readySeries.map((s) => getCompleteSeriesKey(s, timeFields))),
+    [readySeries, timeFields]
+  );
+  const seriesData = React.useRef<SeriesData[]>([]);
+
+  React.useEffect(() => {
+    const { files } = useStore.getState(); // don't notify of files updates
+    const oldData = seriesData.current;
+
+    const newData = readySeries.map((ser): SeriesData => {
+      const timeSer = timeSeries.current[ser.filePath];
+      const seriesKey = getCompleteSeriesKey(ser, timeFields);
+      const oldSer = oldData.find((s) => s.key === seriesKey);
+      if (oldSer) {
+        return oldSer;
+      }
+
+      let yMax = 0;
+      const data = files[ser.filePath].rawData.map((r, i) => {
+        const d = {
+          x: timeSer.values[i],
+          y: Number(r[ser.yField]),
+        };
+        yMax = Math.max(yMax, d.y);
+        return d;
+      });
+
+      return { key: seriesKey, seriesKey: getSeriesKey(ser), yMax, data };
+    });
+
+    seriesData.current = newData;
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- only recalculate on relevant updates
+  }, [seriesKey]);
+
+  return [seriesData, seriesKey] as const;
+}
+
+function getChartOptions(seriesData: SeriesData[]) {
+  // include 0 in case there are no series defined currently
+  const yMax = Math.max(0, ...seriesData.map((s) => s.yMax));
+  const yBound = yMax + (yTickStep - (yMax % yTickStep));
+  // TODO don't pull from just one file
+  const displayName = Object.values(useStore.getState().files)[0].displayName;
+
+  const options: ChartOptions<'line'> = {
+    animation: false,
+    normalized: true,
+    parsing: false,
+    scales: {
+      x: {
+        type: 'time',
+        time: { minUnit: 'minute' },
+        // keep rotation consistent while zooming
+        ticks: { maxRotation: 45, minRotation: 45 },
       },
-      plugins: {
-        // decimation: {
-        //   enabled: true,
-        //   algorithm: 'lttb',
-        //   samples: 250,
-        //   threshold: 250,
-        // },
-        legend: {
-          position: 'bottom',
+      y: {
+        type: 'linear',
+        // Specify max so the axis doesn't change scale when zooming
+        max: yBound,
+        ticks: { stepSize: yTickStep },
+      },
+    },
+    plugins: {
+      // decimation: {
+      //   enabled: true,
+      //   algorithm: 'lttb',
+      //   samples: 250,
+      //   threshold: 250,
+      // },
+      legend: {
+        position: 'bottom',
+      },
+      title: {
+        display: true,
+        text: displayName,
+        font: { size: 24 },
+      },
+      subtitle: {
+        display: true,
+        text: ['Pinch, scroll, or click and drag to zoom. Shift+drag to pan.', ''],
+        font: { size: 14 },
+      },
+      zoom: {
+        limits: {
+          // can't zoom out beyond original data set or in beyond 3 minutes
+          x: { min: 'original', max: 'original', minRange: 1000 * 60 * 3 },
         },
-        title: {
-          display: true,
-          text: displayName,
-          font: { size: 24 },
-        },
-        subtitle: {
-          display: true,
-          text: ['Pinch, scroll, or click and drag to zoom. Shift+drag to pan.', ''],
-          font: { size: 14 },
+        pan: {
+          enabled: true,
+          mode: 'x',
+          modifierKey: 'shift',
         },
         zoom: {
-          limits: {
-            // can't zoom out beyond original data set or in beyond 3 minutes
-            x: { min: 'original', max: 'original', minRange: 1000 * 60 * 3 },
-          },
-          pan: {
-            enabled: true,
-            mode: 'x',
-            modifierKey: 'shift',
-          },
-          zoom: {
-            drag: { enabled: true },
-            wheel: { enabled: true },
-            pinch: { enabled: true },
-            mode: 'x',
-          },
+          drag: { enabled: true },
+          wheel: { enabled: true },
+          pinch: { enabled: true },
+          mode: 'x',
         },
       },
-    };
-    return result;
-  }, [yMax, displayName]);
+    },
+  };
+
+  return options;
+}
+
+const ChartStuff: React.FunctionComponent = () => {
+  const [props, setProps] = React.useState<LineChartProps>();
+  const [seriesData, seriesKey] = useSeriesData();
+  // The series objects are not cached with the data because they have additional properties
+  // (like color) that may update separately, where updates are less expensive
+  const series = useStore(seriesSelector);
+
+  // The data is stored in a ref and updated in an effect, so also run final calculations in an
+  // effect (not memo) to ensure the latest data is used.
+  React.useEffect(() => {
+    setProps({
+      options: getChartOptions(seriesData.current),
+      data: {
+        datasets: seriesData.current.map((serData): ChartDataset<'line', ScatterDataPoint[]> => {
+          // find the matching series object (it should exist)
+          const ser = series.find((ser) => getSeriesKey(ser) === serData.seriesKey)!;
+
+          return {
+            label: ser.yField,
+            backgroundColor: ser.color,
+            borderColor: ser.color,
+            borderWidth: 2,
+            pointRadius: 1,
+            pointHitRadius: 3,
+            data: serData.data,
+          };
+        }),
+      },
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- only recalculate on relevant updates
+  }, [seriesKey, series]);
 
   return (
     <>
-      {data && <LineChart options={options} data={data} />}
+      {props && <LineChart {...props} />}
       <FieldPicker />
     </>
   );

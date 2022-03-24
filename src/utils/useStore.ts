@@ -2,25 +2,17 @@ import produce from 'immer';
 import { unstable_batchedUpdates } from 'react-dom';
 import create, { StateCreator } from 'zustand';
 import { fetchFile, FetchFileData } from './fetchFile';
-import { Series, FileError, FileInfo } from './types';
-
-// type Primitive = undefined | null | boolean | string | number | Function;
-
-// type DeepImmutable<T> = T extends Primitive
-//   ? T
-//   : T extends Array<infer U>
-//   ? DeepImmutableArray<U>
-//   : DeepImmutableObject<T>;
-
-// interface DeepImmutableArray<T> extends ReadonlyArray<DeepImmutable<T>> {}
-// type DeepImmutableObject<T> = {
-//   readonly [K in keyof T]: DeepImmutable<T[K]>;
-// };
+import { Series, FileInfo, FilePath } from './types';
 
 export type State = {
-  files: Record<string, FileInfo>;
-  lastFileError?: FileError;
+  /** map from file path to file data */
+  files: Record<FilePath, FileInfo>;
+  /** map from file path to timestamp field name */
+  timeFields: Record<FilePath, string>;
+  /** list of series currently being graphed */
   series: Series[];
+  /** most recent error running `fetchFile` (cleared on success) */
+  lastFetchFileError?: { filePath: string; error: string };
 
   /** Fetch file and possibly init related series */
   fetchFile: (filePath: string) => Promise<void>;
@@ -42,6 +34,7 @@ const findSeriesIndex = (state: State, ser: Series) =>
 
 const config: StateCreator<State> = (set) => ({
   files: {},
+  timeFields: {},
   series: [],
 
   // NOTE: directly setting values on state because `set` is wrapped with immer `produce`
@@ -51,13 +44,16 @@ const config: StateCreator<State> = (set) => ({
     unstable_batchedUpdates(() => {
       set((state) => {
         if ((result as any).error) {
-          state.lastFileError = { filePath, error: (result as any).error };
+          state.lastFetchFileError = { filePath, error: (result as any).error };
         } else {
-          delete state.lastFileError;
-          const { fileInfo, series } = result as FetchFileData;
+          delete state.lastFetchFileError;
+          const { fileInfo, timeField, series } = result as FetchFileData;
           state.files[filePath] = fileInfo;
           if (series) {
             state.series.push(...series);
+          }
+          if (timeField) {
+            state.timeFields[filePath] = timeField;
           }
         }
       });
@@ -74,7 +70,7 @@ const config: StateCreator<State> = (set) => ({
 
   setTimeField: (filePath: string, timeField: string) =>
     set((state) => {
-      state.files[filePath].timeField = timeField;
+      state.timeFields[filePath] = timeField;
     }),
 
   addSeries: (ser: Series) =>

@@ -19,12 +19,11 @@ const dropdownStyles: Partial<IDropdownStyles> = {
 
 const FieldPicker: React.FunctionComponent = () => {
   // TODO try not to use the whole store
-  const { files, series, addSeries, removeSeries, setTimeField } = useStore();
+  const { files, timeFields, series, addSeries, removeSeries, setTimeField } = useStore();
   // const { allFields, timeField } = useStore(React.useCallback((s) => s.files[filePath], [filePath]));
 
   // TODO support multiple files
-  const { allFields, timeField, filePath } =
-    (Object.values(files) as FileInfo[] | undefined[])[0] || {};
+  const { allFields, filePath } = (Object.values(files) as FileInfo[] | undefined[])[0] || {};
 
   const dropdownOptions = React.useMemo(
     () => allFields?.map((f): IDropdownOption => ({ key: f, text: f })),
@@ -62,7 +61,7 @@ const FieldPicker: React.FunctionComponent = () => {
     [addSeries, removeSeries, filePath, findSeries]
   );
 
-  if (!dropdownOptions) {
+  if (!dropdownOptions || !filePath) {
     return null;
   }
 
@@ -80,7 +79,7 @@ const FieldPicker: React.FunctionComponent = () => {
         label="Time scale field (MUST contain string or milliseconds of Date)"
         options={dropdownOptions}
         onChange={onTimeDropdownChange}
-        selectedKey={timeField}
+        selectedKey={timeFields[filePath]}
         styles={dropdownStyles}
       />
       <br />

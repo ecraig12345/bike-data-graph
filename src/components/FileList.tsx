@@ -49,7 +49,7 @@ const FileList: React.FunctionComponent = () => {
   return (
     <div className={styles.root}>
       {isFetching ? (
-        <Spinner label="Loading..." />
+        <Spinner label="Loading..." size={SpinnerSize.large} />
       ) : folders ? (
         folders.map((folder) => (
           <details key={folder.name}>

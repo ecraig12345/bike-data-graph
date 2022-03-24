@@ -1,7 +1,7 @@
 /** converted data from a fit file, with roughly original field names */
 export type ConvertedFitData = {
-  /** epoch seconds */
-  timestamp: number;
+  /** string of datetime */
+  timestamp: string;
   /** hh:mm:ss */
   time: string;
   /** hh:mm:ss */
@@ -28,30 +28,27 @@ export type FilesData = FilesDataFolder[];
 
 export type ReadonlyRecord<K extends string | number | symbol, V> = Readonly<Record<K, V>>;
 
+/** list of records from a file (immutable) */
 export type ReadFileData = ReadonlyArray<ReadonlyRecord<string, string | number>>;
 
-/** browser-side file data and metadata */
-export type FileInfo = {
+/** alias of string for documentation */
+export type FilePath = string;
+
+/** browser-side file data and metadata (immutable) */
+export type FileInfo = Readonly<{
   /** original file/folder path, used as unique key */
   filePath: string;
-  /** display name for file */
+  /** initial display name for file */
   displayName: string;
   /** data from file (with any conversions applied on server) */
   rawData: ReadFileData;
   /** list of all field names in the data */
   allFields: ReadonlyArray<string>;
-  /** name of the timestamp field */
-  timeField?: string;
-};
-
-export type FileError = {
-  filePath: string;
-  error: string;
-};
+}>;
 
 /**
- * Info about a series on the chart (`dataset` in chartjs terms).
- * Key is `filePath` + `yField`.
+ * Info about a series on the chart ("dataset" in chartjs terms).
+ * "Key" is `filePath` + `yField`.
  */
 export type Series = {
   /** file/folder path this series is from */
@@ -60,8 +57,6 @@ export type Series = {
   yField: string;
   /** color for the series */
   color: string;
-  // /** name of the timestamp field (x-axis) */
-  // timeField: string;
   // /** display name for the series */
   // label: string;
 };
