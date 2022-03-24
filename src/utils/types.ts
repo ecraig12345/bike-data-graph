@@ -58,6 +58,8 @@ export type Series = {
   filePath: string;
   /** name of the field to graph on the y-axis */
   yField: string;
+  /** color for the series */
+  color: string;
   // /** name of the timestamp field (x-axis) */
   // timeField: string;
   // /** display name for the series */

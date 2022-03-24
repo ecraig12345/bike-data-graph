@@ -8,6 +8,7 @@ import {
 import FieldTable from './FieldTable';
 import { useStore } from '../utils/useStore';
 import { FileInfo } from '../utils/types';
+import { nextColor } from '../utils/randomColor';
 
 type DropdownOnChange = Required<IDropdownProps>['onChange'];
 
@@ -53,7 +54,7 @@ const FieldPicker: React.FunctionComponent = () => {
     (_ev, option) => {
       const ser = findSeries(option);
       if (option!.selected) {
-        addSeries({ filePath: filePath!, yField: option!.key as string });
+        addSeries({ filePath: filePath!, yField: option!.key as string, color: nextColor() });
       } else if (ser) {
         removeSeries(ser);
       }

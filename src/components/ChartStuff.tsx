@@ -10,10 +10,6 @@ const LineChart = dynamic(
   { ssr: false }
 );
 
-// https://www.w3schools.com/colors/colors_groups.asp
-const colors = ['dodgerblue', 'darkorchid', 'limegreen', 'darkorange', 'deeppink'];
-const getColor = (i: number) => colors[i % colors.length];
-
 const yTickStep = 50;
 
 const filesSelector = (s: State) => s.files;
@@ -29,12 +25,12 @@ const ChartStuff: React.FunctionComponent = () => {
     let yMax = 0;
     const datasets: ChartDataset<'line', ScatterDataPoint[]>[] = series
       .filter((d) => !!files[d.filePath]?.timeField)
-      .map(({ yField, filePath }, i) => {
+      .map(({ yField, filePath, color }, i) => {
         const { timeField, rawData } = files[filePath];
         return {
           label: yField,
-          backgroundColor: getColor(i),
-          borderColor: getColor(i),
+          backgroundColor: color,
+          borderColor: color,
           borderWidth: 2,
           pointRadius: 1,
           pointHitRadius: 3,

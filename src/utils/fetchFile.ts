@@ -1,4 +1,5 @@
 import { fetcher } from './fetcher';
+import { nextColor } from './randomColor';
 import { Series, FileInfo } from './types';
 
 export type FetchFileData = {
@@ -38,7 +39,7 @@ export async function fetchFile(filePath: string): Promise<FetchFileData | { err
     let series: Series[] | undefined;
     if (timeField && graphFields.length) {
       // TODO ensure labels are unique
-      series = graphFields.map((f) => ({ filePath, yField: f }));
+      series = graphFields.map((f) => ({ filePath, yField: f, color: nextColor() }));
     }
 
     return { fileInfo: { filePath, displayName, rawData, allFields, timeField }, series };

@@ -6,6 +6,7 @@ import { State, useStore } from '../utils/useStore';
 
 type FieldTableRowProps = {
   name: string;
+  color: string;
   moveDown?: () => void;
   moveUp?: () => void;
   remove: () => void;
@@ -21,10 +22,10 @@ const upIconProps = { iconName: 'ChevronUp' };
 const removeIconProps = { iconName: 'Cancel' };
 
 const FieldTableRow: React.FunctionComponent<FieldTableRowProps> = (props) => {
-  const { name, moveUp, moveDown, remove } = props;
+  const { name, color, moveUp, moveDown, remove } = props;
   return (
     <tr>
-      <th>{name}</th>
+      <th style={{ color }}>{name}</th>
       <td>{moveUp && <IconButton onClick={moveUp} iconProps={upIconProps} />}</td>
       <td>{moveDown && <IconButton onClick={moveDown} iconProps={downIconProps} />}</td>
       <td>
@@ -57,6 +58,7 @@ const FieldTable: React.FunctionComponent = () => {
           <FieldTableRow
             key={s.filePath + s.yField}
             name={s.yField}
+            color={s.color}
             moveUp={() => reorderSeries(s, 'up')}
             moveDown={() => reorderSeries(s, 'down')}
             remove={() => removeSeries(s)}
