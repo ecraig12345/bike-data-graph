@@ -1,11 +1,13 @@
 import React from 'react';
-import useSWR from 'swr';
 import { Link } from '@fluentui/react/lib/Link';
+import { fetcher } from '../utils/fetcher';
 import { FilesData } from '../utils/types';
 import styles from '../styles/FileList.module.css';
 
 type File = { name: string; onClick: (ev: React.MouseEvent) => void };
 type Folder = { name: string; files: File[] };
+
+type FetchFilesResult = { data?: FilesData; error?: string };
 
 export type FileListProps = {
   onFileSelected: (filePath: string) => void;
@@ -13,10 +15,18 @@ export type FileListProps = {
 
 const FileList: React.FunctionComponent<FileListProps> = (props) => {
   const { onFileSelected } = props;
-  const { data, error } = useSWR<FilesData, string>('api/files', {
-    revalidateOnFocus: false, // https://swr.vercel.app/docs/revalidation
-    revalidateOnReconnect: false,
-  });
+  const [{ data, error }, setResult] = React.useState<FetchFilesResult>({});
+
+  React.useEffect(() => {
+    // fetch list of files on mount
+    fetcher<FilesData>('api/files')
+      .then((data) => {
+        setResult({ data });
+      })
+      .catch((error) => {
+        setResult({ error });
+      });
+  }, []);
 
   const folders: Folder[] | undefined = React.useMemo(() => {
     if (error || !data) {

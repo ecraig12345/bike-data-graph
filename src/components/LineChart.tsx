@@ -30,6 +30,11 @@ export type ChartProps<
   data: ChartData<'line', TData, TLabel>;
   options?: ChartOptions<'line'>;
   plugins?: Plugin<'line'>[];
+  /**
+   * Property name which can be used as a unique, stable identifier for each of
+   * `data.datasets`, to determine whether the list of datasets has changed
+   * @default 'label'
+   */
   datasetIdKey?: string;
   fallbackContent?: React.ReactNode;
 };

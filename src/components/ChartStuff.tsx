@@ -23,6 +23,7 @@ const ChartStuff: React.FunctionComponent<ChartStuffProps> = (props) => {
   const [fields, setFields] = React.useState<string[]>();
 
   React.useEffect(() => {
+    // when the list of fields changes, set defaults for the time and graphed fields
     if (allFields) {
       setTimeField(allFields.find((f) => f.toLowerCase() === 'timestamp'));
       setFields(allFields.filter((f) => f.toLowerCase().startsWith('power')));

@@ -27,9 +27,3 @@ export type FilesDataFolder = {
 export type FilesData = FilesDataFolder[];
 
 export type ReadFileData = Record<string, string | number>[];
-
-export type ResponseData<Data> = { data: Data };
-
-export type ErrorData = { error: string };
-
-export type ApiResponse<Data> = ResponseData<Data> | ErrorData;

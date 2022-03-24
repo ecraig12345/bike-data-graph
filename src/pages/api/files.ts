@@ -3,13 +3,23 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 import fs from 'fs-extra';
 import path from 'path';
 import { dataRoot } from '../../utils/server/constants';
-import { ApiResponse, FilesData } from '../../utils/types';
-
-export type FilesResponse = ApiResponse<FilesData>;
+import { FilesData } from '../../utils/types';
 
 const absolute = (...segments: string[]) => path.join(dataRoot, ...segments);
 
-export default async function handler(req: NextApiRequest, res: NextApiResponse<FilesResponse>) {
+/**
+ * Read files from default root data directory.
+ * Returns JSON on success or string error message on error.
+ */
+export default async function handler(
+  req: NextApiRequest,
+  res: NextApiResponse<FilesData | string>
+) {
+  if (!fs.existsSync(dataRoot)) {
+    res.status(404).send(`"${dataRoot}" does not exist`);
+    return;
+  }
+
   const folders = fs
     .readdirSync(dataRoot)
     .filter((entry) => fs.statSync(absolute(entry)).isDirectory())
@@ -21,5 +31,5 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
         .filter((f) => /(?<!\.definitions|records)\.csv$/.test(f)),
     }));
 
-  res.status(200).json({ data: folders });
+  res.status(200).json(folders);
 }
