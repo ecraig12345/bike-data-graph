@@ -1,6 +1,8 @@
 import React from 'react';
 import { IconButton } from '@fluentui/react/lib/Button';
 import { mergeStyles } from '@fluentui/react/lib/Styling';
+import shallow from 'zustand/shallow';
+import { State, useStore } from '../utils/useStore';
 
 type FieldTableRowProps = {
   name: string;
@@ -32,22 +34,14 @@ const FieldTableRow: React.FunctionComponent<FieldTableRowProps> = (props) => {
   );
 };
 
-export type FieldTableProps = {
-  fields: string[];
-  setFields: (fields: string[]) => void;
-};
+const selector = (s: State) => ({
+  series: s.series,
+  reorderSeries: s.reorderSeries,
+  removeSeries: s.removeSeries,
+});
 
-const moveField = (fields: string[], i: number, action: 'up' | 'down' | 'remove') => {
-  const newFields = [...fields];
-  const field = newFields.splice(i, 1)[0];
-  if (action !== 'remove') {
-    newFields.splice(action === 'up' ? i - 1 : i + 1, 0, field);
-  }
-  return newFields;
-};
-
-const FieldTable: React.FunctionComponent<FieldTableProps> = (props) => {
-  const { fields, setFields } = props;
+const FieldTable: React.FunctionComponent = () => {
+  const { series, reorderSeries, removeSeries } = useStore(selector, shallow);
 
   return (
     <table className={className}>
@@ -59,15 +53,13 @@ const FieldTable: React.FunctionComponent<FieldTableProps> = (props) => {
         </tr>
       </thead>
       <tbody>
-        {fields.map((f, i) => (
+        {series.map((s) => (
           <FieldTableRow
-            key={f}
-            name={f}
-            moveUp={i !== 0 ? () => setFields(moveField(fields, i, 'up')) : undefined}
-            moveDown={
-              i !== fields.length - 1 ? () => setFields(moveField(fields, i, 'down')) : undefined
-            }
-            remove={() => setFields(moveField(fields, i, 'remove'))}
+            key={s.filePath + s.yField}
+            name={s.yField}
+            moveUp={() => reorderSeries(s, 'up')}
+            moveDown={() => reorderSeries(s, 'down')}
+            remove={() => removeSeries(s)}
           />
         ))}
       </tbody>

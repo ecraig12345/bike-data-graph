@@ -1,7 +1,7 @@
 import React from 'react';
 import dynamic from 'next/dynamic';
-import { useChartData } from '../utils/chart/useChartData';
-import { useChartProps } from '../utils/chart/useChartProps';
+import type { ChartData, ChartDataset, ChartOptions, ScatterDataPoint } from 'chart.js';
+import { State, useStore } from '../utils/useStore';
 import FieldPicker from './FieldPicker';
 
 const LineChart = dynamic(
@@ -10,44 +10,123 @@ const LineChart = dynamic(
   { ssr: false }
 );
 
-export type ChartStuffProps = {
-  filePath: string;
-};
+// https://www.w3schools.com/colors/colors_groups.asp
+const colors = ['dodgerblue', 'darkorchid', 'limegreen', 'darkorange', 'deeppink'];
+const getColor = (i: number) => colors[i % colors.length];
 
-const ChartStuff: React.FunctionComponent<ChartStuffProps> = (props) => {
-  const { filePath } = props;
+const yTickStep = 50;
 
-  const { data: rawData, fields: allFields, error } = useChartData(filePath);
+const filesSelector = (s: State) => s.files;
+const seriesSelector = (s: State) => s.series;
 
-  const [timeField, setTimeField] = React.useState<string>();
-  const [fields, setFields] = React.useState<string[]>();
+const ChartStuff: React.FunctionComponent = () => {
+  const files = useStore(filesSelector);
+  const series = useStore(seriesSelector);
 
-  React.useEffect(() => {
-    // when the list of fields changes, set defaults for the time and graphed fields
-    if (allFields) {
-      setTimeField(allFields.find((f) => f.toLowerCase() === 'timestamp'));
-      setFields(allFields.filter((f) => f.toLowerCase().startsWith('power')));
+  // TODO more granular calculations?
+  // should see how much it slows when changing fields with larger data sets.
+  const { data, yMax } = React.useMemo(() => {
+    let yMax = 0;
+    const datasets: ChartDataset<'line', ScatterDataPoint[]>[] = series
+      .filter((d) => !!files[d.filePath]?.timeField)
+      .map(({ yField, filePath }, i) => {
+        const { timeField, rawData } = files[filePath];
+        return {
+          label: yField,
+          backgroundColor: getColor(i),
+          borderColor: getColor(i),
+          borderWidth: 2,
+          pointRadius: 1,
+          pointHitRadius: 3,
+          data: rawData.map((r) => {
+            const d = {
+              x: new Date(r[timeField!]).getTime(),
+              y: Number(r[yField]),
+            };
+            yMax = Math.max(yMax, d.y);
+            return d;
+          }),
+        };
+      });
+
+    const data: ChartData<'line', ScatterDataPoint[]> = { datasets };
+    return datasets.length ? { data, yMax } : {};
+  }, [files, series]);
+
+  // TODO don't pull from just one file
+  const displayName = Object.values(files)[0]?.displayName;
+
+  const options = React.useMemo(() => {
+    if (!yMax) {
+      return undefined;
     }
-  }, [allFields]);
 
-  const { data, options } = useChartProps(filePath, rawData, timeField, fields);
+    const yBound = yMax + (yTickStep - (yMax % yTickStep));
 
-  if (error || !(data && fields?.length && timeField)) {
-    return <>{error}</>;
-  }
+    const result: ChartOptions<'line'> = {
+      animation: false,
+      normalized: true,
+      parsing: false,
+      scales: {
+        x: {
+          type: 'time',
+          time: { minUnit: 'minute' },
+          // keep rotation consistent while zooming
+          ticks: { maxRotation: 45, minRotation: 45 },
+        },
+        y: {
+          type: 'linear',
+          // Specify max so the axis doesn't change scale when zooming
+          max: yBound,
+          ticks: { stepSize: yTickStep },
+        },
+      },
+      plugins: {
+        // decimation: {
+        //   enabled: true,
+        //   algorithm: 'lttb',
+        //   samples: 250,
+        //   threshold: 250,
+        // },
+        legend: {
+          position: 'bottom',
+        },
+        title: {
+          display: true,
+          text: displayName,
+          font: { size: 24 },
+        },
+        subtitle: {
+          display: true,
+          text: ['Pinch, scroll, or click and drag to zoom. Shift+drag to pan.', ''],
+          font: { size: 14 },
+        },
+        zoom: {
+          limits: {
+            // can't zoom out beyond original data set or in beyond 3 minutes
+            x: { min: 'original', max: 'original', minRange: 1000 * 60 * 3 },
+          },
+          pan: {
+            enabled: true,
+            mode: 'x',
+            modifierKey: 'shift',
+          },
+          zoom: {
+            drag: { enabled: true },
+            wheel: { enabled: true },
+            pinch: { enabled: true },
+            mode: 'x',
+          },
+        },
+      },
+    };
+    return result;
+  }, [yMax, displayName]);
 
   return (
     <>
       {data && <LineChart options={options} data={data} />}
-      {allFields && (
-        <FieldPicker
-          timeField={timeField}
-          setTimeField={setTimeField}
-          allFields={allFields}
-          fields={fields}
-          setFields={setFields}
-        />
-      )}
+      <FieldPicker />
     </>
   );
 };

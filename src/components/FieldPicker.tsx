@@ -6,14 +6,8 @@ import {
   IDropdownStyles,
 } from '@fluentui/react/lib/Dropdown';
 import FieldTable from './FieldTable';
-
-export type FieldPickerProps = {
-  allFields: string[];
-  timeField: string | undefined;
-  fields: string[];
-  setTimeField: (timeField: string) => void;
-  setFields: (fields: string[]) => void;
-};
+import { useStore } from '../utils/useStore';
+import { FileInfo } from '../utils/types';
 
 type DropdownOnChange = Required<IDropdownProps>['onChange'];
 
@@ -22,30 +16,54 @@ const dropdownStyles: Partial<IDropdownStyles> = {
   root: { display: 'inline-block', marginRight: 30 },
 };
 
-const FieldPicker: React.FunctionComponent<FieldPickerProps> = (props) => {
-  const { allFields, fields, timeField, setTimeField, setFields } = props;
+const FieldPicker: React.FunctionComponent = () => {
+  // TODO try not to use the whole store
+  const { files, series, addSeries, removeSeries, setTimeField } = useStore();
+  // const { allFields, timeField } = useStore(React.useCallback((s) => s.files[filePath], [filePath]));
+
+  // TODO support multiple files
+  const { allFields, timeField, filePath } =
+    (Object.values(files) as FileInfo[] | undefined[])[0] || {};
 
   const dropdownOptions = React.useMemo(
-    (): IDropdownOption[] => allFields.map((f) => ({ key: f, text: f })),
+    () => allFields?.map((f): IDropdownOption => ({ key: f, text: f })),
     [allFields]
   );
+  const selectedKeys = React.useMemo(
+    () => series.filter((s) => s.filePath === filePath).map((s) => s.yField),
+    [series, filePath]
+  );
+
   const onTimeDropdownChange = React.useCallback<DropdownOnChange>(
     (_ev, option) => {
-      setTimeField(option!.key as string);
+      setTimeField(filePath!, option!.key as string);
     },
-    [setTimeField]
+    [filePath, setTimeField]
+  );
+
+  const findSeries = React.useCallback(
+    (option: IDropdownOption | undefined) => {
+      const fieldName = option!.key as string;
+      return series.find((s) => s.yField === fieldName && s.filePath === filePath);
+    },
+    [series, filePath]
   );
 
   const onFieldsDropdownChange = React.useCallback<DropdownOnChange>(
     (_ev, option) => {
-      setFields(
-        option!.selected
-          ? [...fields, option!.key as string]
-          : fields.filter((key) => key !== option!.key)
-      );
+      const ser = findSeries(option);
+      if (option!.selected) {
+        addSeries({ filePath: filePath!, yField: option!.key as string });
+      } else if (ser) {
+        removeSeries(ser);
+      }
     },
-    [fields, setFields]
+    [addSeries, removeSeries, filePath, findSeries]
   );
+
+  if (!dropdownOptions) {
+    return null;
+  }
 
   return (
     <div>
@@ -54,7 +72,7 @@ const FieldPicker: React.FunctionComponent<FieldPickerProps> = (props) => {
         multiSelect
         options={dropdownOptions}
         onChange={onFieldsDropdownChange}
-        selectedKeys={fields}
+        selectedKeys={selectedKeys}
         styles={dropdownStyles}
       />
       <Dropdown
@@ -65,7 +83,7 @@ const FieldPicker: React.FunctionComponent<FieldPickerProps> = (props) => {
         styles={dropdownStyles}
       />
       <br />
-      <FieldTable fields={fields} setFields={setFields} />
+      <FieldTable />
     </div>
   );
 };

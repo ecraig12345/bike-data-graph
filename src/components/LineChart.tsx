@@ -1,8 +1,11 @@
 import React from 'react';
-import type { ChartData, ChartOptions, DefaultDataPoint, Plugin } from 'chart.js';
-import { cloneData, setDatasets } from '../utils/chart/chartUtils';
+import { cloneData, setDatasets } from '../utils/chartUtils';
 
 import {
+  ChartData,
+  ChartOptions,
+  DefaultDataPoint,
+  Plugin,
   Chart,
   LineController,
   LineElement,

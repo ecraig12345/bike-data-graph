@@ -3,12 +3,21 @@ import Head from 'next/head';
 import styles from '../styles/Home.module.css';
 import FilePicker from '../components/FilePicker';
 import ChartStuff from '../components/ChartStuff';
+import { State, useStore } from '../utils/useStore';
+
+// TODO support multiple files
+const filePathSelector = (s: State): string | undefined => Object.values(s.files)[0]?.filePath;
+const fetchFileSelector = (s: State) => s.fetchFile;
 
 export default function Home() {
-  const [filePath, setFilePath] = React.useState<string>(
+  const filePath = useStore(filePathSelector);
+  const fetchFile = useStore(fetchFileSelector);
+
+  React.useEffect(() => {
     // TODO
-    '2022-03-08/2022-03-08-17-31-59.records_data.csv'
-  );
+    fetchFile('2022-03-08/2022-03-08-17-31-59.records_data.csv');
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <div className={styles.container}>
@@ -21,11 +30,7 @@ export default function Home() {
       <main className={styles.main}>
         <h1 className={styles.title}>Bike data comparison</h1>
 
-        {filePath ? (
-          <ChartStuff filePath={filePath} />
-        ) : (
-          <FilePicker onFileSelected={setFilePath} />
-        )}
+        {filePath ? <ChartStuff /> : <FilePicker />}
       </main>
     </div>
   );

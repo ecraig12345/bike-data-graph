@@ -37,7 +37,7 @@ const DropZone = () => {
             })}
           >
             <input {...getInputProps()} />
-            Drop file or click here
+            Drop file or click here (THIS CURRENTLY DOES NOTHING)
           </div>
         );
       }}

@@ -3,13 +3,15 @@ import { Toggle } from '@fluentui/react/lib/Toggle';
 import { useBoolean } from '@fluentui/react-hooks';
 import FileList from './FileList';
 import DropZone from './DropZone';
+import { State, useStore } from '../utils/useStore';
 
-export type FilePickerProps = {
-  onFileSelected: (filePath: string) => void;
-};
+const lastFileErrorSelector = (s: State) => s.lastFileError;
+const fetchFileSelector = (s: State) => s.fetchFile;
 
-const FilePicker: React.FunctionComponent<FilePickerProps> = (props) => {
+const FilePicker: React.FunctionComponent = (props) => {
   const [listFiles, { toggle: toggleListFiles }] = useBoolean(true);
+  const lastFileError = useStore(lastFileErrorSelector);
+  const fetchFile = useStore(fetchFileSelector);
 
   return (
     <>
@@ -20,7 +22,8 @@ const FilePicker: React.FunctionComponent<FilePickerProps> = (props) => {
         onChange={toggleListFiles}
         id="toggle1"
       />
-      {listFiles ? <FileList onFileSelected={props.onFileSelected} /> : <DropZone />}
+      {listFiles ? <FileList onFileSelected={fetchFile} /> : <DropZone />}
+      {lastFileError && `Error loading "${lastFileError.filePath}": ${lastFileError.error}`}
     </>
   );
 };

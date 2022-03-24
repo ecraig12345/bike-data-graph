@@ -26,4 +26,40 @@ export type FilesDataFolder = {
 
 export type FilesData = FilesDataFolder[];
 
-export type ReadFileData = Record<string, string | number>[];
+export type ReadonlyRecord<K extends string | number | symbol, V> = Readonly<Record<K, V>>;
+
+export type ReadFileData = ReadonlyArray<ReadonlyRecord<string, string | number>>;
+
+/** browser-side file data and metadata */
+export type FileInfo = {
+  /** original file/folder path, used as unique key */
+  filePath: string;
+  /** display name for file */
+  displayName: string;
+  /** data from file (with any conversions applied on server) */
+  rawData: ReadFileData;
+  /** list of all field names in the data */
+  allFields: ReadonlyArray<string>;
+  /** name of the timestamp field */
+  timeField?: string;
+};
+
+export type FileError = {
+  filePath: string;
+  error: string;
+};
+
+/**
+ * Info about a series on the chart (`dataset` in chartjs terms).
+ * Key is `filePath` + `yField`.
+ */
+export type Series = {
+  /** file/folder path this series is from */
+  filePath: string;
+  /** name of the field to graph on the y-axis */
+  yField: string;
+  // /** name of the timestamp field (x-axis) */
+  // timeField: string;
+  // /** display name for the series */
+  // label: string;
+};
