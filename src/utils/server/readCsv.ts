@@ -1,6 +1,7 @@
 import { parse, transform } from 'csv';
-import type { Transformer } from 'stream-transform';
 import fs from 'fs-extra';
+import { Readable } from 'stream';
+import type { Transformer } from 'stream-transform';
 import mapValues from 'lodash-es/mapValues';
 import { streamToArray } from './streamToArray';
 
@@ -10,21 +11,57 @@ function maybeToNumber(v: any) {
   return NUM_REGEX.test(v) ? Number(v) : v;
 }
 
-/**
- * Read a CSV file with column headers.
- * @param filePath File path to convert
- * @param convertNumbers Whether to convert strings that appear to be numbers
- * @param limit Limit on number of lines to read
- * @returns Stream of record objects, with column headers as keys
- */
-export function readCsvStream(
-  filePath: string,
-  convertNumbers?: boolean,
-  limit?: number
-): Transformer {
-  const inStream = fs.createReadStream(filePath);
+export type CsvInputOptions = (
+  | {
+      type: 'file';
+      /** CSV file to read from */
+      filePath: string;
+    }
+  | {
+      type: 'string';
+      /** CSV data */
+      data: string;
+    }
+) & {
+  /** Limit on number of lines to read */
+  limit?: number;
+};
 
-  return inStream
+type CsvOutputOptions = {
+  /** Whether to convert values that appear to be numbers */
+  convertNumbers?: boolean;
+};
+type CsvOutputOptionsStream = { type: 'stream' } & CsvOutputOptions;
+type CsvOutputOptionsArray = { type: 'array'; sortByField?: string } & CsvOutputOptions;
+
+/**
+ * Read/parse a CSV file with column headers.
+ *
+ * @param inputOptions If `inputOptions.type` is `file`, read from the file path and parse.
+ * If it's `string`, just parse the given data.
+ * @param outputOptions If `outputOptions.type` is `stream`, return a stream of record objects
+ * (with column headers as keys). If it's `array`, return an array of record objects.
+ * @returns Stream or array of record objects, with column headers as keys.
+ */
+export function readCsv<T>(
+  inputOptions: CsvInputOptions,
+  outputOptions: CsvOutputOptionsArray
+): Promise<T[]>;
+export function readCsv<T>(
+  inputOptions: CsvInputOptions,
+  outputOptions: CsvOutputOptionsStream
+): Transformer;
+export function readCsv<T>(
+  inputOptions: CsvInputOptions,
+  outputOptions: CsvOutputOptionsArray | CsvOutputOptionsStream
+) {
+  const { limit } = inputOptions;
+  const inStream =
+    inputOptions.type === 'file'
+      ? fs.createReadStream(inputOptions.filePath)
+      : Readable.from(inputOptions.data.split(/\r?\n/g));
+
+  const outStream = inStream
     .pipe(
       parse({
         columns: true,
@@ -33,20 +70,13 @@ export function readCsvStream(
         ...(limit && { toLine: limit }),
       })
     )
-    .pipe(transform((record: any) => (convertNumbers ? mapValues(record, maybeToNumber) : record)));
-}
+    .pipe(
+      transform((record: any) =>
+        outputOptions.convertNumbers ? mapValues(record, maybeToNumber) : record
+      )
+    );
 
-/**
- * Read a CSV file with column headers.
- * @param filePath File path to convert
- * @param convertNumbers Whether to convert strings that appear to be numbers
- * @param sortByField Optional field to sort the result by
- * @returns Array of record objects, with column headers as keys
- */
-export function readCsv<T>(
-  filePath: string,
-  convertNumbers?: boolean,
-  sortByField?: keyof T
-): Promise<Record<string, T>[]> {
-  return streamToArray(readCsvStream(filePath, convertNumbers), sortByField as string | undefined);
+  return outputOptions.type === 'array'
+    ? streamToArray<T>(outStream, outputOptions.sortByField)
+    : outStream;
 }

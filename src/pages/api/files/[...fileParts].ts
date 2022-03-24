@@ -3,8 +3,8 @@ import path from 'path';
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { dataRoot } from '../../../utils/server/constants';
 import { convert } from '../../../utils/server/convert';
-import type { ReadFileData } from '../../../utils/types';
 import { readCsv } from '../../../utils/server/readCsv';
+import type { ReadFileData } from '../../../utils/types';
 
 export type ReadFileQuery = {
   fileParts: string[];
@@ -29,9 +29,11 @@ export default async function handler(
     : path.basename(filePath).includes('records_data');
 
   try {
+    const inputOptions = { type: 'file' as const, filePath };
+    const outputOptions = { type: 'array' as const, sortByField: 'timestamp' };
     const fileContent = shouldConvert
-      ? await convert(filePath, 'timestamp')
-      : await readCsv(filePath, true, 'timestamp');
+      ? await convert(inputOptions, outputOptions)
+      : await readCsv(inputOptions, { ...outputOptions, convertNumbers: true });
 
     res.status(200).json(fileContent as ReadFileData);
   } catch (err) {

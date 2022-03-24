@@ -1,7 +1,7 @@
 import { stringify } from 'csv';
 import { Options as StringifyOptions } from 'csv-stringify';
 import fs from 'fs';
-import { convert, convertStream } from '../utils/server/convert';
+import { convert } from '../utils/server/convert';
 
 const args = process.argv.slice(2);
 let limit: number | undefined;
@@ -14,13 +14,13 @@ const outFile = args.shift();
 const outStream = outFile ? fs.createWriteStream(outFile) : process.stdout;
 
 async function run() {
-  const data = await convert(inFile);
+  const data = await convert({ type: 'file', filePath: inFile, limit }, { type: 'array' });
   console.log(JSON.stringify(data, null, 2));
   process.exit(0);
 }
 // run();
 
-convertStream(inFile, limit)
+convert({ type: 'file', filePath: inFile, limit }, { type: 'stream' })
   .pipe(
     stringify({
       header: true,
