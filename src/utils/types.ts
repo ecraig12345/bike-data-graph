@@ -60,3 +60,9 @@ export type Series = {
   // /** display name for the series */
   // label: string;
 };
+
+export type ConvertFileBody = {
+  filePath: string;
+  csvData: string;
+  convert?: boolean;
+};

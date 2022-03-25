@@ -1,17 +1,30 @@
 import React from 'react';
 import { Link } from '@fluentui/react/lib/Link';
 import { Spinner, SpinnerSize } from '@fluentui/react/lib/Spinner';
+import { mergeStyleSets } from '@fluentui/react/lib/Styling';
 import { fetcher } from '../utils/fetcher';
 import { FilesData } from '../utils/types';
-import styles from '../styles/FileList.module.css';
-import { useStore } from '../utils/useStore';
+
+export type FileListProps = {
+  onFileSelected: (filePath: string) => void;
+};
 
 type File = { name: string; onClick: (ev: React.MouseEvent) => void };
 type Folder = { name: string; files: File[] };
 
-type GetAllFilesResult = { folders?: Folder[]; error?: string };
+type ListFoldersResult = { folders?: Folder[]; error?: string };
 
-async function getAllFiles(setIsFetching: (isFetching: boolean) => void) {
+const styles = mergeStyleSets({
+  root: {
+    width: '100%',
+    '*': { lineHeight: '1.5em' },
+    ul: { marginTop: '0.2em' },
+    summary: { cursor: 'pointer' },
+  },
+  error: { color: 'red' },
+});
+
+async function listFolders(props: FileListProps) {
   let data: FilesData;
   try {
     data = await fetcher('api/files');
@@ -25,32 +38,27 @@ async function getAllFiles(setIsFetching: (isFetching: boolean) => void) {
       name: file,
       onClick: (ev) => {
         ev.preventDefault();
-        setIsFetching(true);
-        useStore.getState().fetchFile(`${folder.name}/${file}`);
+        props.onFileSelected(`${folder.name}/${file}`);
       },
     })),
   }));
   return { folders };
 }
 
-const FileList: React.FunctionComponent = () => {
-  const [{ folders, error }, setResult] = React.useState<GetAllFilesResult>({});
-  const [isFetching, setIsFetching] = React.useState(true);
+const FileList: React.FunctionComponent<FileListProps> = (props) => {
+  const [{ folders, error }, setListFoldersResult] = React.useState<ListFoldersResult>({});
 
   React.useEffect(() => {
     // fetch list of files on mount
-    getAllFiles(setIsFetching).then((res) => {
-      setResult(res);
-      setIsFetching(false);
+    listFolders(props).then((res) => {
+      setListFoldersResult(res);
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (
     <div className={styles.root}>
-      {isFetching ? (
-        <Spinner label="Loading..." size={SpinnerSize.large} />
-      ) : folders ? (
+      {folders ? (
         folders.map((folder) => (
           <details key={folder.name}>
             <summary>{folder.name}</summary>
@@ -63,8 +71,10 @@ const FileList: React.FunctionComponent = () => {
             </ul>
           </details>
         ))
+      ) : error ? (
+        <div className={styles.error}>{error}</div>
       ) : (
-        error
+        <Spinner label="Loading..." size={SpinnerSize.large} />
       )}
     </div>
   );

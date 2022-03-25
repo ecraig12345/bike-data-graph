@@ -1,8 +1,8 @@
 import { fetcher } from './fetcher';
 import { nextColor } from './randomColor';
-import { Series, FileInfo } from './types';
+import { Series, FileInfo, ConvertFileBody } from './types';
 
-export type FetchFileData = {
+export type FetchFileResponse = {
   /** file data and basic info */
   fileInfo: FileInfo;
   /** timestamp field name, if field with the default expected name was present */
@@ -11,10 +11,26 @@ export type FetchFileData = {
   series?: Series[];
 };
 
-export async function fetchFile(filePath: string): Promise<FetchFileData | { error: string }> {
+/**
+ * Read and/or parse a CSV file using the server.
+ * @param filePath File path, usually to read from
+ * @param csvData CSV data if the file was already loaded via drag/drop
+ */
+export async function fetchFile(
+  filePath: string,
+  csvData?: string
+): Promise<FetchFileResponse | { error: string }> {
   let rawData: FileInfo['rawData'];
   try {
-    rawData = await fetcher(`api/files/${filePath}`);
+    if (csvData) {
+      const body: ConvertFileBody = { filePath, csvData };
+      rawData = await fetcher(`api/convertFile`, {
+        method: 'POST',
+        body: JSON.stringify(body),
+      });
+    } else {
+      rawData = await fetcher(`api/files/${filePath}`);
+    }
   } catch (err) {
     return { error: `Error fetching data: ${err}` };
   }

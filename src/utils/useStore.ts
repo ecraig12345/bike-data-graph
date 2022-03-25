@@ -1,7 +1,7 @@
 import produce from 'immer';
 import { unstable_batchedUpdates } from 'react-dom';
 import create, { StateCreator } from 'zustand';
-import { fetchFile, FetchFileData } from './fetchFile';
+import { fetchFile, FetchFileResponse } from './fetchFile';
 import { Series, FileInfo, FilePath } from './types';
 
 export type State = {
@@ -12,10 +12,10 @@ export type State = {
   /** list of series currently being graphed */
   series: Series[];
   /** most recent error running `fetchFile` (cleared on success) */
-  lastFetchFileError?: { filePath: string; error: string };
+  lastFetchError?: { filePath: string; error: string };
 
-  /** Fetch file and possibly init related series */
-  fetchFile: (filePath: string) => Promise<void>;
+  /** Fetch/convert file and possibly init related series */
+  fetchFile: (filePath: string, csvData?: string) => Promise<void>;
   /** Remove file and related series */
   removeFile: (filePath: string) => void;
 
@@ -39,15 +39,15 @@ const config: StateCreator<State> = (set) => ({
 
   // NOTE: directly setting values on state because `set` is wrapped with immer `produce`
 
-  fetchFile: async (filePath: string) => {
-    const result = await fetchFile(filePath);
+  fetchFile: async (filePath: string, csvData?: string) => {
+    const result = await fetchFile(filePath, csvData);
     unstable_batchedUpdates(() => {
       set((state) => {
         if ((result as any).error) {
-          state.lastFetchFileError = { filePath, error: (result as any).error };
+          state.lastFetchError = { filePath, error: (result as any).error };
         } else {
-          delete state.lastFetchFileError;
-          const { fileInfo, timeField, series } = result as FetchFileData;
+          delete state.lastFetchError;
+          const { fileInfo, timeField, series } = result as FetchFileResponse;
           state.files[filePath] = fileInfo;
           if (series) {
             state.series.push(...series);

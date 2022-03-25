@@ -12,7 +12,7 @@ export async function streamToArray<T>(stream: Transformer, sortByField?: string
   }
   await finished(stream);
 
-  if (sortByField && (data[0] as any)[sortByField]) {
+  if (sortByField && data.length && (data[0] as any)[sortByField]) {
     return sortBy(data as any[], sortByField);
   }
 

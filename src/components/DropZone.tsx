@@ -1,47 +1,65 @@
 import React from 'react';
 import dynamic from 'next/dynamic';
+import { mergeStyleSets } from '@fluentui/react/lib/Styling';
 
 // https://react-dropzone.js.org/
-const Dropzone = dynamic(() => import('react-dropzone'));
+const ReactDropzone = dynamic(() => import('react-dropzone'));
 
-const DropZone = () => {
-  const onDrop = React.useCallback((acceptedFiles) => {
-    acceptedFiles.forEach((file: Blob) => {
+export type DropZoneProps = {
+  onFileSelected: (filePath: string, data: string) => void;
+};
+
+const styles = mergeStyleSets({
+  drop: {
+    width: '100%',
+    padding: '2em',
+    border: '2px dashed gray',
+    background: '#eee',
+    display: 'flex',
+    justifyContent: 'center',
+  },
+  error: { color: 'reddark' },
+});
+
+const DropZone: React.FunctionComponent<DropZoneProps> = (props) => {
+  const { onFileSelected } = props;
+  const [error, setError] = React.useState<string>();
+
+  const onDrop = React.useCallback(
+    (acceptedFiles: File[]) => {
+      setError('');
+      // TOOD handle multiple files
+      const file = acceptedFiles[0];
       const reader = new FileReader();
 
-      reader.onabort = () => console.log('file reading was aborted');
-      reader.onerror = () => console.log('file reading has failed');
+      reader.onabort = () => setError('File reading aborted');
+      reader.onerror = () => setError('Error reading file');
       reader.onload = () => {
-        // Do whatever you want with the file contents
-        const binaryStr = reader.result;
-        console.log(binaryStr);
+        const result =
+          typeof reader.result === 'string'
+            ? reader.result
+            : new TextDecoder('utf-8').decode(reader.result as ArrayBuffer);
+        onFileSelected(file.name, result);
       };
+
       reader.readAsArrayBuffer(file);
-    });
-  }, []);
+    },
+    [onFileSelected]
+  );
 
   return (
-    <Dropzone onDrop={onDrop} accept="text/csv">
+    // TODO accept multiple files
+    <ReactDropzone maxFiles={1} onDrop={onDrop} accept="text/csv">
       {({ getRootProps, getInputProps }) => {
         return (
-          <div
-            {...getRootProps({
-              style: {
-                width: '100%',
-                padding: '2em',
-                border: '2px dashed gray',
-                background: '#eee',
-                display: 'flex',
-                justifyContent: 'center',
-              },
-            })}
-          >
+          <div {...getRootProps({ className: styles.drop })}>
             <input {...getInputProps()} />
-            Drop file or click here (THIS CURRENTLY DOES NOTHING)
+            Drop file or click here
+            {error && <p className={styles.error}>{error}</p>}
           </div>
         );
       }}
-    </Dropzone>
+    </ReactDropzone>
   );
 };
 

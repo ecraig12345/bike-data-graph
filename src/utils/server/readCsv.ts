@@ -59,7 +59,7 @@ export function readCsv<T>(
   const inStream =
     inputOptions.type === 'file'
       ? fs.createReadStream(inputOptions.filePath)
-      : Readable.from(inputOptions.data.split(/\r?\n/g));
+      : Readable.from(inputOptions.data);
 
   const outStream = inStream
     .pipe(
