@@ -27,13 +27,14 @@ const conversions: Record<
   'm/s': (v) => [Number(v) * 2.23694, 'mph'],
   'km/hr': (v) => [Number(v) * 0.621371, 'mph'],
   watts: (v) => [Number(v), 'W'],
-  w: (v) => [Number(v), 'W'],
-  bpm: (v) => [Number(v), 'bpm'],
-  c: (v) => [(Number(v) * 9) / 5 + 32, 'F'],
-  degc: (v) => [(Number(v) * 9) / 5 + 32, 'F'],
-  rpm: (v) => [Number(v), 'rpm'],
+  BPM: (v) => [Number(v), 'bpm'],
+  C: (v) => [(Number(v) * 9) / 5 + 32, 'F'],
+  degC: (v) => [(Number(v) * 9) / 5 + 32, 'F'],
+  RPM: (v) => [Number(v), 'rpm'],
   '%': (v) => [Number(v), '%'],
 };
+
+const convertedUnitNames = ['date', 'deg', 'mi', 'ft', 'mph', 'W', 'bpm', 'F', 'rpm', '%'];
 
 const fitFieldRegex = /^(?:record\.)?(developer\.\d+\.)?(\w+)(?:\[(.*?)\])?$/;
 const velocompFieldRegex = /^([\w ]+)(?: \((.*?)\))?$/;
@@ -110,9 +111,13 @@ export function convertField(
   value: string
 ): [value: number | string, units: string] | undefined {
   let [fieldName, units] = Array.isArray(field) ? field : getFieldDescriptionParts(field) || [];
-  units = units?.toLowerCase();
-  if (units && fieldName && conversions[units]) {
-    return conversions[units](value, fieldName);
+  if (units && fieldName) {
+    if (conversions[units]) {
+      return conversions[units](value, fieldName);
+    }
+    if (convertedUnitNames.includes(units)) {
+      return [Number(value), units];
+    }
   }
   return undefined;
 }
@@ -120,5 +125,5 @@ export function convertField(
 const NUM_REGEX = /^-?\d*\.?\d+$/;
 
 export function maybeToNumber(v: any) {
-  return NUM_REGEX.test(v) ? Number(v) : v;
+  return typeof v === 'number' ? v : NUM_REGEX.test(v) ? Number(v) : v;
 }

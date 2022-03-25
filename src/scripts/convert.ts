@@ -1,5 +1,4 @@
 import { stringify } from 'csv';
-import { Options as StringifyOptions } from 'csv-stringify';
 import fs from 'fs';
 import { convert } from '../utils/server/convert';
 
@@ -13,17 +12,15 @@ const inFile = args.shift()!;
 const outFile = args.shift();
 const outStream = outFile ? fs.createWriteStream(outFile) : process.stdout;
 
+// @ts-ignore
 async function run() {
-  const data = await convert({ type: 'file', filePath: inFile, limit }, { type: 'array' });
+  const data = await convert({ type: 'file', filePath: inFile, limit });
   console.log(JSON.stringify(data, null, 2));
   process.exit(0);
 }
 // run();
 
-convert(
-  { type: 'file', filePath: inFile, limit, fromLine: /velocomp|ibike/i.test(inFile) ? 5 : 1 },
-  { type: 'stream' }
-)
+convert({ type: 'file', filePath: inFile, limit }, 'stream')
   .pipe(
     stringify({
       header: true,

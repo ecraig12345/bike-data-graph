@@ -7,10 +7,12 @@
       "DOM.Iterable"
     ],
     "types": [
+      "jest",
       "node"
     ],
     "forceConsistentCasingInFileNames": true,
     "strict": true,
+    "noUnusedLocals": true,
     "allowJs": true,
     "skipLibCheck": true,
     "noEmit": true,

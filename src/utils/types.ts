@@ -69,5 +69,5 @@ export type SeriesMutable = Omit<Series, keyof SeriesId>;
 export type ConvertFileBody = {
   filePath: string;
   csvData: string;
-  convert?: boolean;
+  format?: 'fit' | 'velocomp';
 };

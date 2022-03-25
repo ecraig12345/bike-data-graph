@@ -10,6 +10,13 @@
       "request": "launch",
       "command": "npm run dev",
       "console": "integratedTerminal",
+    },
+    {
+      "name": "Debug current open test",
+      "type": "node-terminal",
+      "request": "launch",
+      "command": "npm run test -i --watch ${fileBasenameNoExtension}",
+      "console": "integratedTerminal"
     }
   ]
 }

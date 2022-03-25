@@ -1,7 +1,5 @@
-import path from 'path';
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { convert } from '../../utils/server/convert';
-import { readCsv } from '../../utils/server/readCsv';
 import { ConvertFileBody, ReadFileData } from '../../utils/types';
 
 export default async function handler(
@@ -11,26 +9,19 @@ export default async function handler(
   let body: ConvertFileBody;
   try {
     body = JSON.parse(req.body);
-    if (!body.csvData || !body.filePath) {
-      throw 'bad request';
-    }
   } catch (err) {
-    res.status(400).send('Request body was not in expected JSON format');
+    res.status(400).send('Request body was not in JSON format');
+    return;
+  }
+  if (!body.csvData || !body.filePath) {
+    res.status(400).send('Request body was missing csvData or filePath');
     return;
   }
 
-  const {
-    filePath,
-    csvData,
-    convert: shouldConvert = path.basename(filePath).includes('records_data'),
-  } = body;
+  const { filePath, csvData } = body;
 
   try {
-    const inputOptions = { type: 'string' as const, data: csvData };
-    const outputOptions = { type: 'array' as const, sortByField: 'timestamp' };
-    const fileContent = shouldConvert
-      ? await convert(inputOptions, outputOptions)
-      : await readCsv<ReadFileData>(inputOptions, { ...outputOptions, convertNumbers: true });
+    const fileContent = await convert({ type: 'string' as const, filePath, data: csvData });
 
     res.status(200).json(fileContent);
   } catch (err) {

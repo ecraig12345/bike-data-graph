@@ -54,7 +54,8 @@ export function convertRecord(record: Record<string, string>, state: ConvertStat
     let newFieldName =
       fieldName === 'timestamp'
         ? 'timestamp'
-        : fieldName.toLowerCase() + (convertedUnits || units ? `[${convertedUnits || units}]` : '');
+        : fieldName.toLowerCase() +
+          (convertedUnits || units ? ` (${convertedUnits || units})` : '');
 
     if (newFieldName in data) {
       // already found a value for this field--rename it
@@ -71,7 +72,8 @@ export function convertRecord(record: Record<string, string>, state: ConvertStat
 
     data[newFieldName] = convertedValue ?? maybeToNumber(value);
 
-    if (newFieldName === 'timestamp') {
+    // add time info unless this file was already converted
+    if (newFieldName === 'timestamp' && !(record.time && record.duration)) {
       addTimeInfo(data, state);
     }
   });
