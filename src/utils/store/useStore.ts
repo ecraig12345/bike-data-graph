@@ -33,7 +33,12 @@ const config: StateCreator<State> = (set, get) => ({
   // NOTE: directly setting values on state because `set` is wrapped with immer `produce`
 
   addFile: async (filePath, csvData) => {
+    set((state) => {
+      delete state.lastFetchError;
+    });
+
     const result = await addFile(filePath, csvData);
+
     unstable_batchedUpdates(() => {
       set((state) => {
         if ((result as any).error) {

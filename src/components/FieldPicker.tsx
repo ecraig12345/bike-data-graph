@@ -82,6 +82,7 @@ const FieldPicker: React.FunctionComponent = () => {
         styles={dropdownStyles}
       />
       <br />
+      <br />
       <FieldTable />
     </div>
   );

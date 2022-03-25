@@ -1,61 +1,68 @@
 import React from 'react';
 import { Spinner, SpinnerSize } from '@fluentui/react/lib/Spinner';
 import { mergeStyleSets } from '@fluentui/react/lib/Styling';
-import { Toggle } from '@fluentui/react/lib/Toggle';
 import { useBoolean } from '@fluentui/react-hooks';
 import FileList from './FileList';
 import DropZone from './DropZone';
 import { State, useStore } from '../utils/store/useStore';
 
 const lastFetchErrorSelector = (s: State) => s.lastFetchError;
+const filesSelector = (s: State) => s.files;
 
 const styles = mergeStyleSets({
-  root: { width: 'min(100%, 600px)', margin: '0 auto' },
+  root: {
+    width: 'min(100%, 600px)',
+    margin: '0 auto',
+    paddingLeft: '1em',
+  },
+  summary: { cursor: 'pointer', marginLeft: '-1em' },
+  fileList: { paddingLeft: '1em' },
   error: { color: 'red' },
 });
 
 const FilePicker: React.FunctionComponent = () => {
-  const [listFiles, { toggle: toggleListFiles }] = useBoolean(true);
-  const [isLoading, setIsLoading] = React.useState(false);
+  const [isOpen, { toggle: toggleIsOpen }] = useBoolean(true);
+  const [loadingFile, setLoadingFile] = React.useState<string>('');
   const lastFetchError = useStore(lastFetchErrorSelector);
+  const files = useStore(filesSelector);
 
   const onFileSelected = React.useCallback((filePath: string, csvData?: string) => {
-    setIsLoading(true);
+    setLoadingFile(filePath);
     useStore.getState().addFile(filePath, csvData);
   }, []);
 
   React.useEffect(() => {
-    if (lastFetchError) {
-      setIsLoading(false);
+    if (lastFetchError || files[loadingFile]) {
+      setLoadingFile('');
     }
-  }, [lastFetchError]);
+  }, [files, lastFetchError, loadingFile]);
 
   return (
-    <div className={styles.root}>
-      <Toggle
-        inlineLabel
-        label="List files"
-        checked={listFiles}
-        onChange={toggleListFiles}
-        id="toggle1"
-      />
-      {isLoading ? (
+    <details open={isOpen} className={styles.root}>
+      <summary className={styles.summary} onClick={toggleIsOpen}>
+        Select files
+      </summary>
+      <br />
+      {loadingFile ? (
         <Spinner label="Loading file..." size={SpinnerSize.large} />
       ) : (
         <>
-          {listFiles ? (
+          <details className={styles.fileList}>
+            <summary className={styles.summary}>Data files</summary>
+            <br />
             <FileList onFileSelected={onFileSelected} />
-          ) : (
-            <DropZone onFileSelected={onFileSelected} />
-          )}
+          </details>
+          <br />
+          <DropZone onFileSelected={onFileSelected} />
+          <br />
           {lastFetchError && (
-            <p className={styles.error}>
+            <div className={styles.error}>
               {`Error loading "${lastFetchError.filePath}": ${lastFetchError.error}`}
-            </p>
+            </div>
           )}
         </>
       )}
-    </div>
+    </details>
   );
 };
 

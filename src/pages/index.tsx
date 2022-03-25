@@ -5,11 +5,10 @@ import FilePicker from '../components/FilePicker';
 import ChartStuff from '../components/ChartStuff';
 import { State, useStore } from '../utils/store/useStore';
 
-// TODO support multiple files
-const filePathSelector = (s: State): string | undefined => Object.values(s.files)[0]?.filePath;
+const filesSelector = (s: State) => s.files;
 
 export default function Home() {
-  const filePath = useStore(filePathSelector);
+  const files = useStore(filesSelector);
 
   React.useEffect(() => {
     // TODO
@@ -28,7 +27,8 @@ export default function Home() {
       <main className={styles.main}>
         <h1 className={styles.title}>Bike data comparison</h1>
 
-        {filePath ? <ChartStuff /> : <FilePicker />}
+        <FilePicker />
+        {!!Object.keys(files).length && <ChartStuff />}
       </main>
     </div>
   );
