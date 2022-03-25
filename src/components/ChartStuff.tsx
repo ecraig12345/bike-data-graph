@@ -1,7 +1,7 @@
 import React from 'react';
 import dynamic from 'next/dynamic';
 import type { ChartDataset, ChartOptions, ScatterDataPoint } from 'chart.js';
-import { State, useStore } from '../utils/useStore';
+import { State, useStore } from '../utils/store/useStore';
 import FieldPicker from './FieldPicker';
 import { FilePath, Series } from '../utils/types';
 import type { LineChartProps } from './LineChart';

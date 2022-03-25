@@ -5,7 +5,7 @@ import { Toggle } from '@fluentui/react/lib/Toggle';
 import { useBoolean } from '@fluentui/react-hooks';
 import FileList from './FileList';
 import DropZone from './DropZone';
-import { State, useStore } from '../utils/useStore';
+import { State, useStore } from '../utils/store/useStore';
 
 const lastFetchErrorSelector = (s: State) => s.lastFetchError;
 

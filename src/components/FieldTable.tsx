@@ -2,7 +2,7 @@ import React from 'react';
 import { IconButton } from '@fluentui/react/lib/Button';
 import { SpinButton, ISpinButtonProps, ISpinButtonStyles } from '@fluentui/react/lib/SpinButton';
 import { mergeStyles } from '@fluentui/react/lib/Styling';
-import { State, useStore } from '../utils/useStore';
+import { State, useStore } from '../utils/store/useStore';
 import { Series } from '../utils/types';
 
 type FieldTableRowProps = {

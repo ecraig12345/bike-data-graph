@@ -3,7 +3,7 @@ import Head from 'next/head';
 import styles from '../styles/Home.module.css';
 import FilePicker from '../components/FilePicker';
 import ChartStuff from '../components/ChartStuff';
-import { State, useStore } from '../utils/useStore';
+import { State, useStore } from '../utils/store/useStore';
 
 // TODO support multiple files
 const filePathSelector = (s: State): string | undefined => Object.values(s.files)[0]?.filePath;

@@ -6,7 +6,7 @@ import {
   IDropdownStyles,
 } from '@fluentui/react/lib/Dropdown';
 import FieldTable from './FieldTable';
-import { useStore } from '../utils/useStore';
+import { useStore } from '../utils/store/useStore';
 import { FileInfo } from '../utils/types';
 
 type DropdownOnChange = Required<IDropdownProps>['onChange'];
