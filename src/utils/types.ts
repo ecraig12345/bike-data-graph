@@ -59,8 +59,8 @@ export type Series = {
   color: string;
   /** whether/how much to smooth the final data */
   smooth: number;
-  // /** display name for the series */
-  // label: string;
+  /** display name for the series */
+  label: string;
 };
 
 export type SeriesId = Required<Pick<Series, 'filePath' | 'yField'>>;

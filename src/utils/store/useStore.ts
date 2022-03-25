@@ -20,6 +20,8 @@ export type State = SeriesSlice & {
 
   /** Set the time field for all series from a file */
   setTimeField: (filePath: string, timeField: string) => void;
+
+  getFileDisplayName: (filePath: string) => string;
 };
 
 const config: StateCreator<State> = (set, get) => ({
@@ -30,7 +32,7 @@ const config: StateCreator<State> = (set, get) => ({
 
   // NOTE: directly setting values on state because `set` is wrapped with immer `produce`
 
-  fetchFile: async (filePath: string, csvData?: string) => {
+  fetchFile: async (filePath, csvData) => {
     const result = await fetchFile(filePath, csvData);
     unstable_batchedUpdates(() => {
       set((state) => {
@@ -51,7 +53,7 @@ const config: StateCreator<State> = (set, get) => ({
     });
   },
 
-  removeFile: (filePath: string) =>
+  removeFile: (filePath) =>
     set((state) => {
       if (state.files[filePath]) {
         delete state.files[filePath];
@@ -63,6 +65,8 @@ const config: StateCreator<State> = (set, get) => ({
     set((state) => {
       state.timeFields[filePath] = timeField;
     }),
+
+  getFileDisplayName: (filePath) => get().files[filePath].displayName,
 });
 
 // immer middleware

@@ -24,6 +24,7 @@ const findSeriesIndex = (state: SeriesSlice, ser: SeriesId) =>
 export const initSeries = (ser: SeriesId & Partial<SeriesMutable>): Series => ({
   color: nextColor(),
   smooth: 0,
+  label: ser.yField,
   ...ser,
 });
 

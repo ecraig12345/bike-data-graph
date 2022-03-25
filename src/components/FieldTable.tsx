@@ -1,6 +1,7 @@
 import React from 'react';
 import { IconButton } from '@fluentui/react/lib/Button';
 import { SpinButton, ISpinButtonProps, ISpinButtonStyles } from '@fluentui/react/lib/SpinButton';
+import { TextField } from '@fluentui/react/lib/TextField';
 import { mergeStyles } from '@fluentui/react/lib/Styling';
 import { State, useStore } from '../utils/store/useStore';
 import { Series } from '../utils/types';
@@ -26,8 +27,16 @@ const removeIconProps = { iconName: 'Cancel' };
 
 const FieldTableRow: React.FunctionComponent<FieldTableRowProps> = (props) => {
   const { series } = props;
-  const { yField: name, color, smooth } = series;
+  const { yField: name, color, smooth, filePath, label } = series;
+  const fileDisplayName = useStore(
+    React.useCallback((s) => s.getFileDisplayName(filePath), [filePath])
+  );
   const { reorderSeries, removeSeries, updateSeries } = useStore.getState();
+
+  const onLabelChange = React.useCallback(
+    (_ev, newValue?: string) => updateSeries(series, { label: newValue || '' }),
+    [series, updateSeries]
+  );
 
   const onSmoothChange: ISpinButtonProps['onChange'] = React.useCallback(
     (_ev, newValue?) => updateSeries(series, { smooth: Number(newValue || 0) }),
@@ -40,6 +49,9 @@ const FieldTableRow: React.FunctionComponent<FieldTableRowProps> = (props) => {
   return (
     <tr>
       <th style={{ color }}>{name}</th>
+      <td>
+        <TextField title="Label" value={label} onChange={onLabelChange} />
+      </td>
       <td>
         <SpinButton
           value={String(smooth)}
@@ -59,6 +71,7 @@ const FieldTableRow: React.FunctionComponent<FieldTableRowProps> = (props) => {
       <td>
         <IconButton onClick={remove} title="Remove" iconProps={removeIconProps} />
       </td>
+      <td>{fileDisplayName}</td>
     </tr>
   );
 };
@@ -72,7 +85,7 @@ const FieldTable: React.FunctionComponent = () => {
     <table className={className}>
       <thead>
         <tr>
-          {['Field', 'Smooth', 'Up', 'Down', 'Remove'].map((h) => (
+          {['Field', 'Label', 'Smooth', 'Up', 'Down', 'Remove', 'From'].map((h) => (
             <th key={h}>{h}</th>
           ))}
         </tr>

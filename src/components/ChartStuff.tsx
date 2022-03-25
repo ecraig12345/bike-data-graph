@@ -137,8 +137,9 @@ function getChartOptions(seriesData: SeriesData[]) {
   // include 0 in case there are no series defined currently
   const yMax = Math.max(0, ...seriesData.map((s) => s.yMax));
   const yBound = yMax + (yTickStep - (yMax % yTickStep));
-  // TODO don't pull from just one file
-  const displayName = Object.values(useStore.getState().files)[0].displayName;
+  const displayName = Object.values(useStore.getState().files)
+    .map((f) => f.displayName)
+    .join(', ');
 
   const options: ChartOptions<'line'> = {
     animation: false,
@@ -201,6 +202,8 @@ function getChartOptions(seriesData: SeriesData[]) {
   return options;
 }
 
+const datasetIdKey = 'seriesKey';
+
 const ChartStuff: React.FunctionComponent = () => {
   const [props, setProps] = React.useState<LineChartProps>();
   const [seriesData, seriesKey] = useSeriesData();
@@ -212,6 +215,7 @@ const ChartStuff: React.FunctionComponent = () => {
   // effect (not memo) to ensure the latest data is used.
   React.useEffect(() => {
     setProps({
+      datasetIdKey,
       options: getChartOptions(seriesData.current),
       data: {
         datasets: seriesData.current.map((serData): ChartDataset<'line', ScatterDataPoint[]> => {
@@ -219,7 +223,8 @@ const ChartStuff: React.FunctionComponent = () => {
           const ser = series.find((ser) => getSeriesKey(ser) === serData.seriesKey)!;
 
           return {
-            label: ser.yField,
+            label: ser.label,
+            [datasetIdKey as any]: serData.seriesKey,
             backgroundColor: ser.color,
             borderColor: ser.color,
             borderWidth: 2,
