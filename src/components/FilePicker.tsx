@@ -21,7 +21,7 @@ const FilePicker: React.FunctionComponent = () => {
 
   const onFileSelected = React.useCallback((filePath: string, csvData?: string) => {
     setIsLoading(true);
-    useStore.getState().fetchFile(filePath, csvData);
+    useStore.getState().addFile(filePath, csvData);
   }, []);
 
   React.useEffect(() => {

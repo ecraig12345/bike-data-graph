@@ -1,7 +1,7 @@
 import { fetcher } from './fetcher';
 import { FileInfo, ConvertFileBody, SeriesId } from './types';
 
-export type FetchFileResponse = {
+export type AddFileResponse = {
   /** file data and basic info */
   fileInfo: FileInfo;
   /** timestamp field name, if field with the default expected name was present */
@@ -15,10 +15,10 @@ export type FetchFileResponse = {
  * @param filePath File path, usually to read from
  * @param csvData CSV data if the file was already loaded via drag/drop
  */
-export async function fetchFile(
+export async function addFile(
   filePath: string,
   csvData?: string
-): Promise<FetchFileResponse | { error: string }> {
+): Promise<AddFileResponse | { error: string }> {
   let rawData: FileInfo['rawData'];
   try {
     if (csvData) {

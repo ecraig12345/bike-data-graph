@@ -13,7 +13,7 @@ export default function Home() {
 
   React.useEffect(() => {
     // TODO
-    // useStore.getState().fetchFile('2022-03-08/2022-03-08-17-31-59.records_data.csv');
+    // useStore.getState().addFile('2022-03-08/2022-03-08-17-31-59.records_data.csv');
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
