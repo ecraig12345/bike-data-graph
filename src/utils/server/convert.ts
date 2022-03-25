@@ -28,7 +28,7 @@ export function convert(
   inputOptions: CsvInputOptions,
   outputOptions: ConvertOutputOptionsArray | ConvertOutputOptionsSteam
 ) {
-  const state: ConvertState = { warnedFields: new Set(), warnedUnits: new Set(), startTime: 0 };
+  const state = new ConvertState();
   const stream = readCsv(inputOptions, { type: 'stream' }).pipe(
     transform((record: any) => convertRecord(record, state))
   );

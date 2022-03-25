@@ -2,13 +2,8 @@ import { parse, transform } from 'csv';
 import fs from 'fs-extra';
 import { Readable } from 'stream';
 import type { Transformer } from 'stream-transform';
+import { maybeToNumber } from '../conversions';
 import { streamToArray } from './streamToArray';
-
-const NUM_REGEX = /^-?\d*\.?\d+$/;
-
-function maybeToNumber(v: any) {
-  return NUM_REGEX.test(v) ? Number(v) : v;
-}
 
 export type CsvInputOptions = (
   | {

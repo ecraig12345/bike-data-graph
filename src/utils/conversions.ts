@@ -1,7 +1,7 @@
 /** Garmin/FIT(?) timestamps are recorded with this weird offset */
 const fitOffsetTime = new Date(1989, 11, 31).getTime();
 
-/** Conversions from units found in FIT file to "standard" units */
+/** Conversions from units found in FIT file to "standard" units (mostly imperial except power) */
 const conversions: Record<
   string,
   (v: string, fieldName: string) => [value: string | number, units: string]
@@ -23,7 +23,7 @@ const conversions: Record<
       ? [Number(v) * 0.000621371, 'mi'] // distance
       : [Number(v) * 3.28084, 'ft'], // probably altitude/elevation
   meters: (v) => [Number(v) * 3.28084, 'ft'],
-  km: (v) => [Number(v) * 0.621371, 'mph'],
+  km: (v) => [Number(v) * 0.621371, 'mi'],
   'm/s': (v) => [Number(v) * 2.23694, 'mph'],
   'km/hr': (v) => [Number(v) * 0.621371, 'mph'],
   watts: (v) => [Number(v), 'W'],
@@ -82,19 +82,20 @@ const velocompFieldRegex = /^([\w ]+)(?: \((.*?)\))?$/;
  */
 export function getFieldDescriptionParts(
   fieldDescription: string
-): [fieldName: string, units: string, developer: string] | undefined {
+): [fieldName: string, units: string, developer: string] {
   fieldDescription = fieldDescription.trim();
   const fitMatch = fieldDescription.match(fitFieldRegex);
   const velocompMatch = fieldDescription.match(velocompFieldRegex);
 
   if (fitMatch) {
     const [, developer, fieldName, units] = fitMatch;
-    return [fieldName, units, developer];
+    return [fieldName, units || '', developer || ''];
   }
   if (velocompMatch) {
     const [, fieldName, units] = velocompMatch;
-    return [fieldName, units, ''];
+    return [fieldName, units || '', ''];
   }
+  return [fieldDescription, '', ''];
 }
 
 /**
@@ -114,4 +115,10 @@ export function convertField(
     return conversions[units](value, fieldName);
   }
   return undefined;
+}
+
+const NUM_REGEX = /^-?\d*\.?\d+$/;
+
+export function maybeToNumber(v: any) {
+  return NUM_REGEX.test(v) ? Number(v) : v;
 }

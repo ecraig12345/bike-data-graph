@@ -6,7 +6,7 @@ import { ConvertFileBody, ReadFileData } from '../../utils/types';
 
 export default async function handler(
   req: NextApiRequest,
-  res: NextApiResponse<ReadFileData | string>
+  res: NextApiResponse<ReadFileData[] | string>
 ) {
   let body: ConvertFileBody;
   try {
@@ -30,9 +30,9 @@ export default async function handler(
     const outputOptions = { type: 'array' as const, sortByField: 'timestamp' };
     const fileContent = shouldConvert
       ? await convert(inputOptions, outputOptions)
-      : await readCsv(inputOptions, { ...outputOptions, convertNumbers: true });
+      : await readCsv<ReadFileData>(inputOptions, { ...outputOptions, convertNumbers: true });
 
-    res.status(200).json(fileContent as ReadFileData);
+    res.status(200).json(fileContent);
   } catch (err) {
     console.error((err as Error).stack || err);
     res.status(400).send((err as Error).message || String(err));

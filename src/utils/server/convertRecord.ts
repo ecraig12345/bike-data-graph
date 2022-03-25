@@ -1,11 +1,11 @@
 import { ReadFileData } from '../types';
-import { convertField, getFieldDescriptionParts } from '../conversions';
+import { convertField, getFieldDescriptionParts, maybeToNumber } from '../conversions';
 
-export type ConvertState = {
-  warnedUnits: Set<string>;
-  warnedFields: Set<string>;
-  startTime: number;
-};
+export class ConvertState {
+  warnedUnits = new Set<string>();
+  warnedFields = new Set<string>();
+  startTime = 0;
+}
 
 const ignoredFields = [
   // non-useful fit fields
@@ -40,14 +40,7 @@ export function convertRecord(record: Record<string, string>, state: ConvertStat
       return;
     }
 
-    let [fieldName, units = ''] = getFieldDescriptionParts(field) || [];
-    if (!fieldName) {
-      if (!warnedFields.has(field)) {
-        console.error(`could not determine field name: "${field}"`);
-        warnedFields.add(field);
-      }
-      return;
-    }
+    const [fieldName, units] = getFieldDescriptionParts(field);
 
     const [convertedValue, convertedUnits = ''] =
       convertField([fieldName, units], value || '0') || [];
@@ -76,9 +69,9 @@ export function convertRecord(record: Record<string, string>, state: ConvertStat
       newFieldName = modifiedFieldName;
     }
 
-    data[newFieldName] = convertedValue ?? value;
+    data[newFieldName] = convertedValue ?? maybeToNumber(value);
 
-    if (fieldName === 'timestamp') {
+    if (newFieldName === 'timestamp') {
       addTimeInfo(data, state);
     }
   });

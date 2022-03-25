@@ -28,8 +28,8 @@ export type FilesData = FilesDataFolder[];
 
 export type ReadonlyRecord<K extends string | number | symbol, V> = Readonly<Record<K, V>>;
 
-/** list of records from a file (immutable) */
-export type ReadFileData = ReadonlyArray<ReadonlyRecord<string, string | number>>;
+/** record from a file (immutable) */
+export type ReadFileData = ReadonlyRecord<string, string | number>;
 
 /** alias of string for documentation */
 export type FilePath = string;
@@ -41,7 +41,7 @@ export type FileInfo = Readonly<{
   /** initial display name for file */
   displayName: string;
   /** data from file (with any conversions applied on server) */
-  rawData: ReadFileData;
+  rawData: ReadonlyArray<ReadFileData>;
   /** list of all field names in the data */
   allFields: ReadonlyArray<string>;
 }>;
