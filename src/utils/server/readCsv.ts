@@ -24,6 +24,8 @@ export type CsvInputOptions = (
 ) & {
   /** Limit on number of lines to read */
   limit?: number;
+  /** 1-indexed line to start parsing from */
+  fromLine?: number;
 };
 
 type CsvOutputOptions = {
@@ -54,7 +56,7 @@ export function readCsv<T>(
   inputOptions: CsvInputOptions,
   outputOptions: CsvOutputOptionsArray | CsvOutputOptionsStream
 ) {
-  const { limit } = inputOptions;
+  const { limit, fromLine } = inputOptions;
   const inStream =
     inputOptions.type === 'file'
       ? fs.createReadStream(inputOptions.filePath)
@@ -66,6 +68,7 @@ export function readCsv<T>(
         columns: true,
         skipEmptyLines: true,
         relaxColumnCountLess: true,
+        ...(fromLine && { fromLine }),
         ...(limit && { toLine: limit }),
       })
     )

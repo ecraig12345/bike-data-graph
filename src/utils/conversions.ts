@@ -4,9 +4,9 @@ const fitOffsetTime = new Date(1989, 11, 31).getTime();
 /** Conversions from units found in FIT file to "standard" units */
 const conversions: Record<
   string,
-  (v: string, fieldName: string) => [value: Date | number, units: string]
+  (v: string, fieldName: string) => [value: string | number, units: string]
 > = {
-  s: (v: string) => {
+  s: (v) => {
     // For now, assume:
     // - weird garmin/fit(?) offset of Dec 31 1989
     // - date was recorded in local time (with DST offset at time of recording)
@@ -15,24 +15,34 @@ const conversions: Record<
     const utcOffsetMinutes = date.getTimezoneOffset();
     // correct for the date being recorded in local time
     date.setMinutes(date.getMinutes() - utcOffsetMinutes);
-    return [date, 'date'];
+    return [date.toISOString(), 'date'];
   },
-  semicircles: (v: string) => [(Number(v) * 180) / Math.pow(2, 31), 'deg'],
-  m: (v: string, fieldName: string) =>
+  semicircles: (v) => [(Number(v) * 180) / Math.pow(2, 31), 'deg'],
+  m: (v, fieldName) =>
     fieldName.toLowerCase().includes('distance')
       ? [Number(v) * 0.000621371, 'mi'] // distance
       : [Number(v) * 3.28084, 'ft'], // probably altitude/elevation
-  'm/s': (v: string) => [Number(v) * 2.23694, 'mph'],
-  watts: (v: string) => [Number(v), 'W'],
-  w: (v: string) => [Number(v), 'W'],
-  bpm: (v: string) => [Number(v), 'bpm'],
-  c: (v: string) => [(Number(v) * 9) / 5 + 32, 'F'],
-  rpm: (v: string) => [Number(v), 'rpm'],
+  meters: (v) => [Number(v) * 3.28084, 'ft'],
+  km: (v) => [Number(v) * 0.621371, 'mph'],
+  'm/s': (v) => [Number(v) * 2.23694, 'mph'],
+  'km/hr': (v) => [Number(v) * 0.621371, 'mph'],
+  watts: (v) => [Number(v), 'W'],
+  w: (v) => [Number(v), 'W'],
+  bpm: (v) => [Number(v), 'bpm'],
+  c: (v) => [(Number(v) * 9) / 5 + 32, 'F'],
+  degc: (v) => [(Number(v) * 9) / 5 + 32, 'F'],
+  rpm: (v) => [Number(v), 'rpm'],
+  '%': (v) => [Number(v), '%'],
 };
 
+const fitFieldRegex = /^(?:record\.)?(developer\.\d+\.)?(\w+)(?:\[(.*?)\])?$/;
+const velocompFieldRegex = /^([\w ]+)(?: \((.*?)\))?$/;
+
 /**
- * Runs regex to match a field name as found in records_data.csv files converted by the Fit SDK.
- * Known fields (the `record.` prefix is optional in the regex):
+ * Runs regex to match a field name as found in a records_data.csv files converted by the Fit SDK
+ * OR in a .csv file saved from a velocomp/ibike file (PowerPod).
+ *
+ * Known fit fields (the `record.` prefix is optional in the regex):
  * - `record.timestamp[s]`
  * - `record.position_lat[semicircles]`
  * - `record.position_long[semicircles]`
@@ -49,26 +59,55 @@ const conversions: Record<
  * - `record.developer.0.Power2[W]`
  * - `record.developer.0.Cadence2[rpm]`
  * - "enhanced" fields are irrelevant (wider int which shouldn't be needed for bike data)
+ *
+ * Known velocomp fields (some may be present but not recorded properly):
+ * - `Speed (km/hr)`
+ * - `Wind Speed (km/hr)`
+ * - `Power (W)`
+ * - `Distance (km)`
+ * - `Elevation (meters)`
+ * - `Hill slope (%)`
+ * - `Temperature (degC)`
+ * - `Timestamp`
+ * - `Moving Time`
+ * - `Cadence (RPM)`
+ * - `Heartrate (BPM)`
+ * - `Lap Marker`
+ * - `Annotation`
+ * - `DFPM Power`
+ * - `Latitude`
+ * - `Longitude`
+ * - `CdA (m^2)`
+ * - `Air Dens (kg/m^3)`
  */
 export function getFieldDescriptionParts(
   fieldDescription: string
 ): [fieldName: string, units: string, developer: string] | undefined {
-  const [, developer, fieldName, units] =
-    fieldDescription.trim().match(/^(?:record\.)?(developer\.\d+\.)?(\w+)(?:\[(.*?)\])?$/) || [];
-  return [fieldName, units, developer];
+  fieldDescription = fieldDescription.trim();
+  const fitMatch = fieldDescription.match(fitFieldRegex);
+  const velocompMatch = fieldDescription.match(velocompFieldRegex);
+
+  if (fitMatch) {
+    const [, developer, fieldName, units] = fitMatch;
+    return [fieldName, units, developer];
+  }
+  if (velocompMatch) {
+    const [, fieldName, units] = velocompMatch;
+    return [fieldName, units, ''];
+  }
 }
 
 /**
- * Convert a value from units in the FIT file to "standard" units
- * @param fieldDescription Field description assumed to contain units in `[]`:
- * e.g. `some_field[units]`, OR array of field name and units
+ * Convert a value from units in the fit or ibike CSV file to "standard" units
+ * @param fieldDescription Field description assumed to contain units in `[]` or `()`:
+ * e.g. `some_field[units]` or `Some Field (units)`, OR array of field name and units
  * @param value Original value string
  * @returns Converted value and new units, or undefined if no conversion found
  */
 export function convertField(
   field: string | [fieldName: string, units: string],
   value: string
-): [value: number | Date, units: string] | undefined {
+): [value: number | string, units: string] | undefined {
   let [fieldName, units] = Array.isArray(field) ? field : getFieldDescriptionParts(field) || [];
   units = units?.toLowerCase();
   if (units && fieldName && conversions[units]) {

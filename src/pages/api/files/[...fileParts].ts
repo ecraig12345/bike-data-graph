@@ -3,19 +3,28 @@ import path from 'path';
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { dataRoot } from '../../../utils/server/constants';
 import { convert } from '../../../utils/server/convert';
-import { readCsv } from '../../../utils/server/readCsv';
+import { CsvInputOptions, readCsv } from '../../../utils/server/readCsv';
 import type { ReadFileData } from '../../../utils/types';
 
 export type ReadFileQuery = {
   fileParts: string[];
   convert?: string;
+  format?: 'fit' | 'velocomp';
 };
 
 export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse<ReadFileData | string>
 ) {
-  const { fileParts, convert: convertParam } = req.query as ReadFileQuery;
+  const {
+    fileParts,
+    convert: convertParam,
+    format = fileParts.slice(-1)[0].includes('records_data')
+      ? 'fit'
+      : /velocomp|ibike/i.test(fileParts.slice(-1)[0])
+      ? 'velocomp'
+      : undefined,
+  } = req.query as ReadFileQuery;
 
   const filePath = path.join(dataRoot, ...fileParts);
 
@@ -29,8 +38,14 @@ export default async function handler(
     : path.basename(filePath).includes('records_data');
 
   try {
-    const inputOptions = { type: 'file' as const, filePath };
+    const inputOptions: CsvInputOptions = {
+      type: 'file' as const,
+      filePath,
+      // velocomp files have metadata on the first 4 lines
+      fromLine: format === 'velocomp' ? 5 : 1,
+    };
     const outputOptions = { type: 'array' as const, sortByField: 'timestamp' };
+
     const fileContent = shouldConvert
       ? await convert(inputOptions, outputOptions)
       : await readCsv(inputOptions, { ...outputOptions, convertNumbers: true });
