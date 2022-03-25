@@ -2,7 +2,6 @@ import { parse, transform } from 'csv';
 import fs from 'fs-extra';
 import { Readable } from 'stream';
 import type { Transformer } from 'stream-transform';
-import mapValues from 'lodash-es/mapValues';
 import { streamToArray } from './streamToArray';
 
 const NUM_REGEX = /^-?\d*\.?\d+$/;
@@ -72,7 +71,9 @@ export function readCsv<T>(
     )
     .pipe(
       transform((record: any) =>
-        outputOptions.convertNumbers ? mapValues(record, maybeToNumber) : record
+        outputOptions.convertNumbers
+          ? Object.fromEntries(Object.entries(record).map(([k, v]) => [k, maybeToNumber(v)]))
+          : record
       )
     );
 

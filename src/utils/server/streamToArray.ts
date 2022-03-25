@@ -1,9 +1,16 @@
 import { finished as streamFinished } from 'stream';
 import type { Transformer } from 'stream-transform';
 import { promisify } from 'util';
-import sortBy from 'lodash-es/sortBy';
 
 const finished = promisify(streamFinished);
+
+function sortBy(data: any[], sortByField: string) {
+  return data.sort((a, b) => {
+    const aVal = a[sortByField];
+    const bVal = b[sortByField];
+    return aVal < bVal ? -1 : aVal > bVal ? 1 : 0;
+  });
+}
 
 export async function streamToArray<T>(stream: Transformer, sortByField?: string): Promise<T[]> {
   const data: T[] = [];
