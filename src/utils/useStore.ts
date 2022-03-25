@@ -2,7 +2,8 @@ import produce from 'immer';
 import { unstable_batchedUpdates } from 'react-dom';
 import create, { StateCreator } from 'zustand';
 import { fetchFile, FetchFileResponse } from './fetchFile';
-import { Series, FileInfo, FilePath } from './types';
+import { nextColor } from './randomColor';
+import { Series, FileInfo, FilePath, SeriesId, SeriesMutable } from './types';
 
 export type State = {
   /** map from file path to file data */
@@ -23,14 +24,24 @@ export type State = {
   setTimeField: (filePath: string, timeField: string) => void;
 
   // TODO should all of this be the responsibility of the store?
-  addSeries: (ser: Series) => void;
-  removeSeries: (ser: Series) => void;
-  reorderSeries: (ser: Series, dir: 'up' | 'down') => void;
+  addSeries: (ser: SeriesId & Partial<SeriesMutable>) => void;
+  removeSeries: (ser: SeriesId) => void;
+  reorderSeries: (ser: SeriesId, dir: 'up' | 'down') => void;
+  updateSeries: (original: SeriesId, updates: Partial<SeriesMutable>) => void;
 };
 
-/** Workaround for being unable to find series by object equality due to immer proxies... */
-const findSeriesIndex = (state: State, ser: Series) =>
+/**
+ * Workaround for being unable to find series by object equality due to immer proxies...
+ * Also allows finding the "matching" series by filePath and yField when updating.
+ */
+const findSeriesIndex = (state: State, ser: SeriesId) =>
   state.series.findIndex((s) => s.filePath === ser.filePath && s.yField === ser.yField);
+
+const initSeries = (ser: SeriesId & Partial<SeriesMutable>): Series => ({
+  color: nextColor(),
+  smooth: 0,
+  ...ser,
+});
 
 const config: StateCreator<State> = (set) => ({
   files: {},
@@ -50,7 +61,7 @@ const config: StateCreator<State> = (set) => ({
           const { fileInfo, timeField, series } = result as FetchFileResponse;
           state.files[filePath] = fileInfo;
           if (series) {
-            state.series.push(...series);
+            state.series.push(...series.map(initSeries));
           }
           if (timeField) {
             state.timeFields[filePath] = timeField;
@@ -68,29 +79,42 @@ const config: StateCreator<State> = (set) => ({
       }
     }),
 
-  setTimeField: (filePath: string, timeField: string) =>
+  setTimeField: (filePath, timeField) =>
     set((state) => {
       state.timeFields[filePath] = timeField;
     }),
 
-  addSeries: (ser: Series) =>
+  addSeries: (ser) =>
     set((state) => {
-      state.series.push(ser);
+      state.series.push(initSeries(ser));
     }),
 
-  removeSeries: (ser: Series) =>
+  removeSeries: (ser) =>
     set((state) => {
       const idx = findSeriesIndex(state, ser);
       idx !== -1 && state.series.splice(idx, 1);
     }),
 
-  reorderSeries: (ser: Series, dir: 'up' | 'down') =>
+  reorderSeries: (ser, dir) =>
     set((state) => {
       const idx = findSeriesIndex(state, ser);
       const count = state.series.length;
       if (idx !== -1 && ((dir === 'up' && idx > 0) || (dir === 'down' && idx < count - 1))) {
-        state.series.splice(idx, 1);
-        state.series.splice(dir === 'up' ? idx - 1 : idx + 1, 0, ser);
+        const value = state.series.splice(idx, 1)[0];
+        state.series.splice(dir === 'up' ? idx - 1 : idx + 1, 0, value);
+      }
+    }),
+
+  updateSeries: (original, updates) =>
+    set((state) => {
+      const idx = findSeriesIndex(state, original);
+      if (idx !== -1) {
+        const ser = state.series[idx];
+        for (const [k, v] of Object.entries(updates)) {
+          if (v !== undefined) {
+            (ser as any)[k] = v;
+          }
+        }
       }
     }),
 });

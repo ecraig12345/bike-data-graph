@@ -1,6 +1,5 @@
 import { fetcher } from './fetcher';
-import { nextColor } from './randomColor';
-import { Series, FileInfo, ConvertFileBody } from './types';
+import { FileInfo, ConvertFileBody, SeriesId } from './types';
 
 export type FetchFileResponse = {
   /** file data and basic info */
@@ -8,7 +7,7 @@ export type FetchFileResponse = {
   /** timestamp field name, if field with the default expected name was present */
   timeField?: string;
   /** default series if fields with expected names are present (`timestamp`, `power*`) */
-  series?: Series[];
+  series?: SeriesId[];
 };
 
 /**
@@ -54,10 +53,10 @@ export async function fetchFile(
     // if timestamp and power fields are available with expected names, add to graph
     const timeField = allFields.find((f) => f.toLowerCase() === 'timestamp');
     const graphFields = allFields.filter((f) => f.toLowerCase().startsWith('power'));
-    let series: Series[] | undefined;
+    let series: SeriesId[] | undefined;
     if (timeField && graphFields.length) {
       // TODO ensure labels are unique
-      series = graphFields.map((f) => ({ filePath, yField: f, color: nextColor() }));
+      series = graphFields.map((f) => ({ filePath, yField: f }));
     }
 
     return { fileInfo: { filePath, displayName, rawData, allFields }, timeField, series };

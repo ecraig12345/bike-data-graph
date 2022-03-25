@@ -1,15 +1,12 @@
 import React from 'react';
 import { IconButton } from '@fluentui/react/lib/Button';
+import { SpinButton, ISpinButtonProps, ISpinButtonStyles } from '@fluentui/react/lib/SpinButton';
 import { mergeStyles } from '@fluentui/react/lib/Styling';
-import shallow from 'zustand/shallow';
 import { State, useStore } from '../utils/useStore';
+import { Series } from '../utils/types';
 
 type FieldTableRowProps = {
-  name: string;
-  color: string;
-  moveDown?: () => void;
-  moveUp?: () => void;
-  remove: () => void;
+  series: Series;
 };
 
 const className = mergeStyles({
@@ -17,52 +14,72 @@ const className = mergeStyles({
   'th:first-child': { width: 100, textAlign: 'right' },
 });
 
+const spinButtonStyles: Partial<ISpinButtonStyles> = {
+  root: { width: 70, minWidth: 70 },
+  spinButtonWrapper: { minWidth: 0 },
+  input: { minWidth: 0 },
+};
+
 const downIconProps = { iconName: 'ChevronDown' };
 const upIconProps = { iconName: 'ChevronUp' };
 const removeIconProps = { iconName: 'Cancel' };
 
 const FieldTableRow: React.FunctionComponent<FieldTableRowProps> = (props) => {
-  const { name, color, moveUp, moveDown, remove } = props;
+  const { series } = props;
+  const { yField: name, color, smooth } = series;
+  const { reorderSeries, removeSeries, updateSeries } = useStore.getState();
+
+  const onSmoothChange: ISpinButtonProps['onChange'] = React.useCallback(
+    (_ev, newValue?) => updateSeries(series, { smooth: Number(newValue || 0) }),
+    [series, updateSeries]
+  );
+  const moveUp = React.useCallback(() => reorderSeries(series, 'up'), [reorderSeries, series]);
+  const moveDown = React.useCallback(() => reorderSeries(series, 'down'), [reorderSeries, series]);
+  const remove = React.useCallback(() => removeSeries(series), [removeSeries, series]);
+
   return (
     <tr>
       <th style={{ color }}>{name}</th>
-      <td>{moveUp && <IconButton onClick={moveUp} iconProps={upIconProps} />}</td>
-      <td>{moveDown && <IconButton onClick={moveDown} iconProps={downIconProps} />}</td>
       <td>
-        <IconButton onClick={remove} iconProps={removeIconProps} />
+        <SpinButton
+          value={String(smooth)}
+          onChange={onSmoothChange}
+          min={0}
+          max={10}
+          title="Smooth data (interval before and after in seconds)"
+          styles={spinButtonStyles}
+        />
+      </td>
+      <td>
+        <IconButton onClick={moveUp} title="Move up" iconProps={upIconProps} />
+      </td>
+      <td>
+        <IconButton onClick={moveDown} title="Move down" iconProps={downIconProps} />
+      </td>
+      <td>
+        <IconButton onClick={remove} title="Remove" iconProps={removeIconProps} />
       </td>
     </tr>
   );
 };
 
-const selector = (s: State) => ({
-  series: s.series,
-  reorderSeries: s.reorderSeries,
-  removeSeries: s.removeSeries,
-});
+const seriesSelector = (s: State) => s.series;
 
 const FieldTable: React.FunctionComponent = () => {
-  const { series, reorderSeries, removeSeries } = useStore(selector, shallow);
+  const allSeries = useStore(seriesSelector);
 
   return (
     <table className={className}>
       <thead>
         <tr>
-          {['Field', 'Up', 'Down', 'Remove'].map((h) => (
+          {['Field', 'Smooth', 'Up', 'Down', 'Remove'].map((h) => (
             <th key={h}>{h}</th>
           ))}
         </tr>
       </thead>
       <tbody>
-        {series.map((s) => (
-          <FieldTableRow
-            key={s.filePath + s.yField}
-            name={s.yField}
-            color={s.color}
-            moveUp={() => reorderSeries(s, 'up')}
-            moveDown={() => reorderSeries(s, 'down')}
-            remove={() => removeSeries(s)}
-          />
+        {allSeries.map((s) => (
+          <FieldTableRow key={s.filePath + s.yField} series={s} />
         ))}
       </tbody>
     </table>

@@ -57,9 +57,14 @@ export type Series = {
   yField: string;
   /** color for the series */
   color: string;
+  /** whether/how much to smooth the final data */
+  smooth: number;
   // /** display name for the series */
   // label: string;
 };
+
+export type SeriesId = Required<Pick<Series, 'filePath' | 'yField'>>;
+export type SeriesMutable = Omit<Series, keyof SeriesId>;
 
 export type ConvertFileBody = {
   filePath: string;

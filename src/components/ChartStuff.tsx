@@ -5,6 +5,7 @@ import { State, useStore } from '../utils/useStore';
 import FieldPicker from './FieldPicker';
 import { FilePath, Series } from '../utils/types';
 import type { LineChartProps } from './LineChart';
+import { smooth } from '../utils/smooth';
 
 const LineChart = dynamic(
   () => import('./LineChart'),
@@ -74,7 +75,7 @@ function useTimeSeries() {
 
 /** get a key for a series object INCLUDING time data */
 function getCompleteSeriesKey(ser: Series, timeFields: Record<FilePath, string>) {
-  return JSON.stringify([ser.filePath, ser.yField, timeFields[ser.filePath]]);
+  return JSON.stringify([ser.filePath, ser.yField, ser.smooth, timeFields[ser.filePath]]);
 }
 /** get a key for a series object NOT including time data */
 function getSeriesKey(ser: Series) {
@@ -118,6 +119,9 @@ function useSeriesData() {
         yMax = Math.max(yMax, d.y);
         return d;
       });
+      if (ser.smooth) {
+        yMax = smooth(data, ser.smooth, ser.smooth);
+      }
 
       return { key: seriesKey, seriesKey: getSeriesKey(ser), yMax, data };
     });
