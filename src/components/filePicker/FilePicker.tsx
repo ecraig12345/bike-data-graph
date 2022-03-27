@@ -1,6 +1,7 @@
 import React from 'react';
 import { Spinner, SpinnerSize } from '@fluentui/react/lib/Spinner';
 import { mergeStyleSets } from '@fluentui/react/lib/Styling';
+import { useDocument } from '@fluentui/react/lib/WindowProvider';
 import { State, useStore } from '../../store/useStore';
 import Details from '../basic/Details';
 import Error from '../basic/Error';
@@ -26,6 +27,8 @@ const FilePicker: React.FunctionComponent = () => {
   const [lastLoadedFile, setLastLoadedFile] = React.useState<string>('');
   const lastFetchError = useStore(lastFetchErrorSelector);
   const files = useStore(filesSelector);
+  const doc = useDocument();
+  const isLocal = !!(doc?.location?.hostname === 'localhost');
 
   const onFileSelected = React.useCallback((file: string | File) => {
     setLastLoadedFile(typeof file === 'string' ? file : file.name);
@@ -42,7 +45,7 @@ const FilePicker: React.FunctionComponent = () => {
         ) : (
           <div className={styles.flex}>
             <DropZone onFileSelected={onFileSelected} />
-            <LocalFileList onFileSelected={onFileSelected} />
+            {isLocal && <LocalFileList onFileSelected={onFileSelected} />}
             {lastFetchError && (
               <Error>{`Error loading "${lastFetchError.filePath}": ${lastFetchError.error}`}</Error>
             )}
