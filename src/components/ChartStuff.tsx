@@ -145,6 +145,7 @@ function getChartOptions(seriesData: SeriesData[]) {
     animation: false,
     normalized: true,
     parsing: false,
+    spanGaps: false,
     scales: {
       x: {
         type: 'time',
@@ -227,7 +228,7 @@ const ChartStuff: React.FunctionComponent = () => {
             [datasetIdKey as any]: serData.seriesKey,
             backgroundColor: ser.color,
             borderColor: ser.color,
-            borderWidth: 2,
+            borderWidth: 1,
             pointRadius: 1,
             pointHitRadius: 3,
             data: serData.data,

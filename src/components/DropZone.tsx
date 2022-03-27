@@ -1,6 +1,7 @@
 import React from 'react';
 import dynamic from 'next/dynamic';
-import { mergeStyleSets } from '@fluentui/react/lib/Styling';
+import { mergeStyles } from '@fluentui/react/lib/Styling';
+import Error from './Error';
 
 // https://react-dropzone.js.org/
 const ReactDropzone = dynamic(() => import('react-dropzone'));
@@ -9,16 +10,13 @@ export type DropZoneProps = {
   onFileSelected: (filePath: string, data: string) => void;
 };
 
-const styles = mergeStyleSets({
-  drop: {
-    width: '100%',
-    padding: '2em',
-    border: '2px dashed gray',
-    background: '#eee',
-    display: 'flex',
-    justifyContent: 'center',
-  },
-  error: { color: 'reddark' },
+const dropClass = mergeStyles({
+  width: '100%',
+  padding: '2em',
+  border: '2px dashed gray',
+  background: '#eee',
+  display: 'flex',
+  justifyContent: 'center',
 });
 
 const DropZone: React.FunctionComponent<DropZoneProps> = (props) => {
@@ -52,10 +50,15 @@ const DropZone: React.FunctionComponent<DropZoneProps> = (props) => {
     <ReactDropzone maxFiles={1} onDrop={onDrop} accept="text/csv">
       {({ getRootProps, getInputProps }) => {
         return (
-          <div {...getRootProps({ className: styles.drop })}>
+          <div {...getRootProps({ className: dropClass })}>
             <input {...getInputProps()} />
             Drop file or click here
-            {error && <p className={styles.error}>{error}</p>}
+            {error && (
+              <Error>
+                <br />
+                {error}
+              </Error>
+            )}
           </div>
         );
       }}

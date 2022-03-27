@@ -29,3 +29,11 @@ export default async function handler(
     res.status(400).send((err as Error).message || String(err));
   }
 }
+
+export const config = {
+  api: {
+    bodyParser: {
+      sizeLimit: '16mb',
+    },
+  },
+};

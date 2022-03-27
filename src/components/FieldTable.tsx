@@ -63,10 +63,10 @@ const FieldTableRow: React.FunctionComponent<FieldTableRowProps> = (props) => {
         />
       </td>
       <td>
-        <IconButton onClick={moveUp} title="Move up" iconProps={upIconProps} />
+        <IconButton onClick={moveDown} title="Move down" iconProps={downIconProps} />
       </td>
       <td>
-        <IconButton onClick={moveDown} title="Move down" iconProps={downIconProps} />
+        <IconButton onClick={moveUp} title="Move up" iconProps={upIconProps} />
       </td>
       <td>
         <IconButton onClick={remove} title="Remove" iconProps={removeIconProps} />
@@ -85,7 +85,7 @@ const FieldTable: React.FunctionComponent = () => {
     <table className={className}>
       <thead>
         <tr>
-          {['Field', 'Label', 'Smooth', 'Up', 'Down', 'Remove', 'From'].map((h) => (
+          {['Field', 'Label', 'Smooth', 'Down', 'Up', 'Remove', 'From'].map((h) => (
             <th key={h}>{h}</th>
           ))}
         </tr>

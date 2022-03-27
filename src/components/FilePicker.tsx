@@ -1,27 +1,23 @@
 import React from 'react';
 import { Spinner, SpinnerSize } from '@fluentui/react/lib/Spinner';
-import { mergeStyleSets } from '@fluentui/react/lib/Styling';
-import { useBoolean } from '@fluentui/react-hooks';
+import { mergeStyles } from '@fluentui/react/lib/Styling';
 import FileList from './FileList';
 import DropZone from './DropZone';
 import { State, useStore } from '../utils/store/useStore';
+import Details from './Details';
+import Error from './Error';
 
 const lastFetchErrorSelector = (s: State) => s.lastFetchError;
 const filesSelector = (s: State) => s.files;
 
-const styles = mergeStyleSets({
-  root: {
-    width: 'min(100%, 600px)',
-    margin: '0 auto',
-    paddingLeft: '1em',
-  },
-  summary: { cursor: 'pointer', marginLeft: '-1em' },
-  fileList: { paddingLeft: '1em' },
-  error: { color: 'red' },
+const rootClass = mergeStyles({
+  width: 'min(100%, 600px)',
+  margin: '0 auto',
+  paddingLeft: '1em',
+  '> summary': { marginBottom: '1em' },
 });
 
 const FilePicker: React.FunctionComponent = () => {
-  const [isOpen, { toggle: toggleIsOpen }] = useBoolean(true);
   const [loadingFile, setLoadingFile] = React.useState<string>('');
   const lastFetchError = useStore(lastFetchErrorSelector);
   const files = useStore(filesSelector);
@@ -38,31 +34,21 @@ const FilePicker: React.FunctionComponent = () => {
   }, [files, lastFetchError, loadingFile]);
 
   return (
-    <details open={isOpen} className={styles.root}>
-      <summary className={styles.summary} onClick={toggleIsOpen}>
-        Select files
-      </summary>
-      <br />
+    <Details summary="Select files" defaultIsOpen className={rootClass}>
       {loadingFile ? (
         <Spinner label="Loading file..." size={SpinnerSize.large} />
       ) : (
         <>
-          <details className={styles.fileList}>
-            <summary className={styles.summary}>Data files</summary>
-            <br />
-            <FileList onFileSelected={onFileSelected} />
-          </details>
-          <br />
           <DropZone onFileSelected={onFileSelected} />
           <br />
+          <FileList onFileSelected={onFileSelected} />
+          <br />
           {lastFetchError && (
-            <div className={styles.error}>
-              {`Error loading "${lastFetchError.filePath}": ${lastFetchError.error}`}
-            </div>
+            <Error>{`Error loading "${lastFetchError.filePath}": ${lastFetchError.error}`}</Error>
           )}
         </>
       )}
-    </details>
+    </Details>
   );
 };
 

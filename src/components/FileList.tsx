@@ -1,11 +1,14 @@
 import React from 'react';
 import { Link } from '@fluentui/react/lib/Link';
 import { Spinner, SpinnerSize } from '@fluentui/react/lib/Spinner';
-import { mergeStyleSets } from '@fluentui/react/lib/Styling';
+import { mergeStyles } from '@fluentui/react/lib/Styling';
 import { fetcher } from '../utils/fetcher';
 import { FilesData } from '../utils/types';
+import Details from './Details';
+import Error from './Error';
 
 export type FileListProps = {
+  className?: string;
   onFileSelected: (filePath: string) => void;
 };
 
@@ -14,17 +17,14 @@ type Folder = { name: string; files: File[] };
 
 type ListFoldersResult = { folders?: Folder[]; error?: string };
 
-const styles = mergeStyleSets({
-  root: {
-    width: '100%',
-    '*': { lineHeight: '1.5em' },
-    ul: { marginTop: '0.2em' },
-    summary: { cursor: 'pointer' },
-  },
-  error: { color: 'red' },
+const rootClass = mergeStyles({
+  width: '100%',
+  '*': { lineHeight: '1.5em' },
+  ul: { marginTop: '0.2em' },
+  summary: { cursor: 'pointer' },
 });
 
-async function listFolders(props: FileListProps) {
+async function listFolders(onFileSelected: FileListProps['onFileSelected']) {
   let data: FilesData;
   try {
     data = await fetcher('api/files');
@@ -38,7 +38,7 @@ async function listFolders(props: FileListProps) {
       name: file,
       onClick: (ev) => {
         ev.preventDefault();
-        props.onFileSelected(`${folder.name}/${file}`);
+        onFileSelected(`${folder.name}/${file}`);
       },
     })),
   }));
@@ -46,18 +46,31 @@ async function listFolders(props: FileListProps) {
 }
 
 const FileList: React.FunctionComponent<FileListProps> = (props) => {
+  const { onFileSelected } = props;
+  const [hasOpened, setHasOpened] = React.useState(false);
   const [{ folders, error }, setListFoldersResult] = React.useState<ListFoldersResult>({});
 
+  const onOpenChange = () => {
+    !hasOpened && setHasOpened(true);
+  };
+
   React.useEffect(() => {
-    // fetch list of files on mount
-    listFolders(props).then((res) => {
-      setListFoldersResult(res);
-    });
+    if (hasOpened && !folders) {
+      // fetch list of files on first open
+      listFolders(onFileSelected).then((res) => {
+        setListFoldersResult(res);
+      });
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [hasOpened]);
 
   return (
-    <div className={styles.root}>
+    <Details
+      summary="List data files"
+      defaultIsOpen={false}
+      onOpenChange={onOpenChange}
+      className={rootClass}
+    >
       {folders ? (
         folders.map((folder) => (
           <details key={folder.name}>
@@ -72,11 +85,11 @@ const FileList: React.FunctionComponent<FileListProps> = (props) => {
           </details>
         ))
       ) : error ? (
-        <div className={styles.error}>{error}</div>
+        <Error>{error}</Error>
       ) : (
         <Spinner label="Loading..." size={SpinnerSize.large} />
       )}
-    </div>
+    </Details>
   );
 };
 
