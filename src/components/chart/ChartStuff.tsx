@@ -2,7 +2,6 @@ import React from 'react';
 import dynamic from 'next/dynamic';
 import type { ChartDataset, ChartOptions, ScatterDataPoint } from 'chart.js';
 import { State, useStore } from '../../store/useStore';
-import SeriesPicker from '../seriesPicker/SeriesPicker';
 import { FilePath, FileSettings, Series } from '../../types';
 import type { LineChartProps } from './LineChart';
 import { smooth } from '../../utils/chart/smooth';
@@ -245,7 +244,6 @@ const ChartStuff: React.FunctionComponent = () => {
     <>
       <div>Pinch, scroll, or click and drag to zoom. Shift+drag to pan.</div>
       {props && <LineChart {...props} />}
-      <SeriesPicker />
     </>
   );
 };

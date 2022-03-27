@@ -4,6 +4,7 @@ import { mergeStyleSets } from '@fluentui/react/lib/Styling';
 import FilePicker from '../components/filePicker/FilePicker';
 import ChartStuff from '../components/chart/ChartStuff';
 import { State, useStore } from '../store/useStore';
+import SeriesPicker from '../components/seriesPicker/SeriesPicker';
 
 const styles = mergeStyleSets({
   container: {
@@ -21,11 +22,9 @@ const styles = mergeStyleSets({
     gap: '1em',
     width: '100%',
   },
-  title: {
-    margin: '0',
-    marginBottom: '1rem',
-    fontSize: '2.5rem',
-    textAlign: 'center',
+  tables: {
+    width: 'min(100%, 800px)',
+    margin: '0 auto 1em',
   },
 });
 
@@ -33,12 +32,7 @@ const filesSelector = (s: State) => s.files;
 
 export default function Home() {
   const files = useStore(filesSelector);
-
-  React.useEffect(() => {
-    // TODO
-    // useStore.getState().addFile('2022-03-08/2022-03-08-17-31-59.records_data.csv');
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  const hasFiles = !!Object.keys(files).length;
 
   return (
     <div className={styles.container}>
@@ -49,10 +43,13 @@ export default function Home() {
       </Head>
 
       <main className={styles.main}>
-        <h1 className={styles.title}>Bike data comparison</h1>
-
-        <FilePicker />
-        {!!Object.keys(files).length && <ChartStuff />}
+        <h1>Bike data comparison</h1>
+        <div className={styles.tables}>
+          <FilePicker />
+          <br />
+          {hasFiles && <SeriesPicker />}
+        </div>
+        {hasFiles && <ChartStuff />}
       </main>
     </div>
   );
