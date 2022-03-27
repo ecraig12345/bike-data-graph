@@ -38,13 +38,17 @@ export type FilePath = string;
 export type FileInfo = Readonly<{
   /** original file/folder path, used as unique key */
   filePath: string;
-  /** initial display name for file */
-  displayName: string;
   /** data from file (with any conversions applied on server) */
   rawData: ReadonlyArray<ReadFileData>;
   /** list of all field names in the data */
   allFields: ReadonlyArray<string>;
 }>;
+
+export type FileSettings = {
+  displayName: string;
+  timeField?: string;
+  offset?: number;
+};
 
 /**
  * Info about a series on the chart ("dataset" in chartjs terms).

@@ -1,11 +1,11 @@
 import { fetcher } from './fetcher';
-import { FileInfo, ConvertFileBody, SeriesId } from './types';
+import { FileInfo, ConvertFileBody, SeriesId, FileSettings } from './types';
 
 export type AddFileResponse = {
   /** file data and basic info */
   fileInfo: FileInfo;
-  /** timestamp field name, if field with the default expected name was present */
-  timeField?: string;
+  /** initial file mutable data, such as display name and timestamp field */
+  fileMeta: FileSettings;
   /** default series if fields with expected names are present (`timestamp`, `power*`) */
   series?: SeriesId[];
 };
@@ -59,7 +59,11 @@ export async function addFile(
       series = graphFields.map((f) => ({ filePath, yField: f }));
     }
 
-    return { fileInfo: { filePath, displayName, rawData, allFields }, timeField, series };
+    return {
+      fileInfo: { filePath, rawData, allFields },
+      fileMeta: { displayName, timeField },
+      series,
+    };
   } catch (err) {
     console.error('Error processing data', (err as Error).stack || err);
     return { error: `Error processing data: ${err}` };

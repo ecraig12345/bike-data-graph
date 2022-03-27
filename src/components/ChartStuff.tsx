@@ -3,7 +3,7 @@ import dynamic from 'next/dynamic';
 import type { ChartDataset, ChartOptions, ScatterDataPoint } from 'chart.js';
 import { State, useStore } from '../utils/store/useStore';
 import FieldPicker from './FieldPicker';
-import { FilePath, Series } from '../utils/types';
+import { FilePath, FileSettings, Series } from '../utils/types';
 import type { LineChartProps } from './LineChart';
 import { smooth } from '../utils/smooth';
 
@@ -15,7 +15,7 @@ const LineChart = dynamic(
 
 const yTickStep = 50;
 
-const timeFieldsSelector = (s: State) => s.timeFields;
+const filesSettingsSelector = (s: State) => s.filesSettings;
 const seriesSelector = (s: State) => s.series;
 
 /** Time series data: field name and values from a particular file */
@@ -42,22 +42,32 @@ type SeriesData = {
  * (a more tailored approach to memoizing and recalculating)
  */
 function useTimeSeries() {
-  const timeFields = useStore(timeFieldsSelector);
-  const timeFieldsKey = React.useMemo(() => JSON.stringify(timeFields), [timeFields]);
+  const filesSettings = useStore(filesSettingsSelector);
+  // key that includes only the relevant parts of filesSettings, to reduce recalculations
+  const timeFieldsKey = React.useMemo(
+    () =>
+      JSON.stringify(
+        Object.entries(filesSettings).map(([filePath, fileSettings]) => [
+          filePath,
+          fileSettings.timeField,
+        ])
+      ),
+    [filesSettings]
+  );
 
   // map from file path to cached time series data
   const timeSeries = React.useRef<TimeSeriesRecord>({});
 
   React.useEffect(() => {
-    const { files } = useStore.getState(); // don't notify of files updates
+    const { files, filesSettings } = useStore.getState(); // don't notify of files updates
     const oldTimeSeries = timeSeries.current;
     const newTimeSeries: typeof oldTimeSeries = {};
 
-    for (const [filePath, timeField] of Object.entries(timeFields)) {
-      if (oldTimeSeries[filePath]?.fieldName === timeField) {
+    for (const [filePath, { timeField }] of Object.entries(filesSettings)) {
+      if (timeField && oldTimeSeries[filePath]?.fieldName === timeField) {
         // same time field name => don't re-calculate (the raw data never changes)
         newTimeSeries[filePath] = oldTimeSeries[filePath];
-      } else {
+      } else if (timeField) {
         // new file or newly-set time field => calculate
         newTimeSeries[filePath] = {
           fieldName: timeField,
@@ -74,8 +84,13 @@ function useTimeSeries() {
 }
 
 /** get a key for a series object INCLUDING time data */
-function getCompleteSeriesKey(ser: Series, timeFields: Record<FilePath, string>) {
-  return JSON.stringify([ser.filePath, ser.yField, ser.smooth, timeFields[ser.filePath]]);
+function getCompleteSeriesKey(ser: Series, filesSettings: Record<FilePath, FileSettings>) {
+  return JSON.stringify([
+    ser.filePath,
+    ser.yField,
+    ser.smooth,
+    filesSettings[ser.filePath].timeField,
+  ]);
 }
 /** get a key for a series object NOT including time data */
 function getSeriesKey(ser: Series) {
@@ -85,16 +100,16 @@ function getSeriesKey(ser: Series) {
 /** get a ref with cached list of series points and maxes, updating when series, files, or time fields update */
 function useSeriesData() {
   const series = useStore(seriesSelector);
-  const timeFields = useStore(timeFieldsSelector);
+  const filesSettings = useStore(filesSettingsSelector);
   const timeSeries = useTimeSeries();
   // series that have a corresponding time field set
   const readySeries = React.useMemo(
-    () => series.filter((s) => !!timeFields[s.filePath]),
-    [series, timeFields]
+    () => series.filter((s) => !!filesSettings[s.filePath].timeField),
+    [series, filesSettings]
   );
   const seriesKey = React.useMemo(
-    () => JSON.stringify(readySeries.map((s) => getCompleteSeriesKey(s, timeFields))),
-    [readySeries, timeFields]
+    () => JSON.stringify(readySeries.map((s) => getCompleteSeriesKey(s, filesSettings))),
+    [readySeries, filesSettings]
   );
   const seriesData = React.useRef<SeriesData[]>([]);
 
@@ -104,7 +119,7 @@ function useSeriesData() {
 
     const newData = readySeries.map((ser): SeriesData => {
       const timeSer = timeSeries.current[ser.filePath];
-      const seriesKey = getCompleteSeriesKey(ser, timeFields);
+      const seriesKey = getCompleteSeriesKey(ser, filesSettings);
       const oldSer = oldData.find((s) => s.key === seriesKey);
       if (oldSer) {
         return oldSer;
@@ -137,7 +152,7 @@ function getChartOptions(seriesData: SeriesData[]) {
   // include 0 in case there are no series defined currently
   const yMax = Math.max(0, ...seriesData.map((s) => s.yMax));
   const yBound = yMax + (yTickStep - (yMax % yTickStep));
-  const displayName = Object.values(useStore.getState().files)
+  const displayName = Object.values(useStore.getState().filesSettings)
     .map((f) => f.displayName)
     .join(', ');
 

@@ -5,8 +5,9 @@ import {
   IDropdownProps,
   IDropdownStyles,
 } from '@fluentui/react/lib/Dropdown';
+import shallow from 'zustand/shallow';
 import FieldTable from './FieldTable';
-import { useStore } from '../utils/store/useStore';
+import { State, useStore } from '../utils/store/useStore';
 import { FileInfo } from '../utils/types';
 
 type DropdownOnChange = Required<IDropdownProps>['onChange'];
@@ -16,10 +17,14 @@ const dropdownStyles: Partial<IDropdownStyles> = {
   root: { display: 'inline-block', marginRight: 30 },
 };
 
+const selector = (s: State) => ({
+  files: s.files,
+  filesSettings: s.filesSettings,
+  series: s.series,
+});
+
 const FieldPicker: React.FunctionComponent = () => {
-  // TODO try not to use the whole store
-  const { files, timeFields, series, addSeries, removeSeries, setTimeField } = useStore();
-  // const { allFields, timeField } = useStore(React.useCallback((s) => s.files[filePath], [filePath]));
+  const { files, filesSettings, series } = useStore(selector, shallow);
 
   // TODO support multiple files
   const { allFields, filePath } = (Object.values(files) as FileInfo[] | undefined[])[0] || {};
@@ -35,9 +40,9 @@ const FieldPicker: React.FunctionComponent = () => {
 
   const onTimeDropdownChange = React.useCallback<DropdownOnChange>(
     (_ev, option) => {
-      setTimeField(filePath!, option!.key as string);
+      useStore.getState().updateFileSettings(filePath!, { timeField: option!.key as string });
     },
-    [filePath, setTimeField]
+    [filePath]
   );
 
   const findSeries = React.useCallback(
@@ -52,12 +57,12 @@ const FieldPicker: React.FunctionComponent = () => {
     (_ev, option) => {
       const ser = findSeries(option);
       if (option!.selected) {
-        addSeries({ filePath: filePath!, yField: option!.key as string });
+        useStore.getState().addSeries({ filePath: filePath!, yField: option!.key as string });
       } else if (ser) {
-        removeSeries(ser);
+        useStore.getState().removeSeries(ser);
       }
     },
-    [addSeries, removeSeries, filePath, findSeries]
+    [filePath, findSeries]
   );
 
   if (!dropdownOptions || !filePath) {
@@ -78,7 +83,7 @@ const FieldPicker: React.FunctionComponent = () => {
         label="Time scale field (MUST contain string or milliseconds of Date)"
         options={dropdownOptions}
         onChange={onTimeDropdownChange}
-        selectedKey={timeFields[filePath]}
+        selectedKey={filesSettings[filePath].timeField}
         styles={dropdownStyles}
       />
       <br />

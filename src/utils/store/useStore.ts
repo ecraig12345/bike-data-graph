@@ -1,38 +1,35 @@
-import produce from 'immer';
 import { unstable_batchedUpdates } from 'react-dom';
 import create, { StateCreator } from 'zustand';
 import { addFile, AddFileResponse } from '../addFile';
+import { FileInfo, FileSettings, FilePath } from '../types';
+import immerMiddleware from './immerMiddleware';
 import { createSeriesSlice, initSeries, SeriesSlice } from './seriesSlice';
-import { FileInfo, FilePath } from '../types';
 
 export type State = SeriesSlice & {
   /** map from file path to file data */
   files: Record<FilePath, FileInfo>;
-  /** map from file path to timestamp field name */
-  timeFields: Record<FilePath, string>;
+  /** map from file path to mutable file settings */
+  filesSettings: Record<FilePath, FileSettings>;
   /** most recent error running `addFile` (cleared on success) */
   lastFetchError?: { filePath: string; error: string };
 
   /** Fetch/convert file and possibly init related series */
-  addFile: (filePath: string, csvData?: string) => Promise<void>;
+  addFile: (filePath: string, csvData?: string, addSeries?: boolean) => Promise<void>;
+  /** Update settings for a file */
+  updateFileSettings: (filePath: string, updates: Partial<FileSettings>) => void;
   /** Remove file and related series */
   removeFile: (filePath: string) => void;
-
-  /** Set the time field for all series from a file */
-  setTimeField: (filePath: string, timeField: string) => void;
-
-  getFileDisplayName: (filePath: string) => string;
 };
 
 const config: StateCreator<State> = (set, get) => ({
   ...createSeriesSlice(set as any, get as any),
 
   files: {},
-  timeFields: {},
+  filesSettings: {},
 
   // NOTE: directly setting values on state because `set` is wrapped with immer `produce`
 
-  addFile: async (filePath, csvData) => {
+  addFile: async (filePath, csvData, addSeries) => {
     set((state) => {
       delete state.lastFetchError;
     });
@@ -45,49 +42,32 @@ const config: StateCreator<State> = (set, get) => ({
           state.lastFetchError = { filePath, error: (result as any).error };
         } else {
           delete state.lastFetchError;
-          const { fileInfo, timeField, series } = result as AddFileResponse;
+          const { fileInfo, fileMeta, series } = result as AddFileResponse;
           state.files[filePath] = fileInfo;
-          if (series) {
+          state.filesSettings[filePath] = fileMeta;
+          if (series && addSeries) {
             state.series.push(...series.map(initSeries));
-          }
-          if (timeField) {
-            state.timeFields[filePath] = timeField;
           }
         }
       });
     });
   },
 
-  removeFile: (filePath) =>
+  updateFileSettings: (filePath, updates) =>
     set((state) => {
-      if (state.files[filePath]) {
-        delete state.files[filePath];
-        state.series = state.series.filter((s) => s.filePath !== filePath);
+      const settings = state.filesSettings[filePath];
+      for (const [k, v] of Object.entries(updates)) {
+        if (v !== undefined) {
+          (settings as any)[k] = v;
+        }
       }
     }),
 
-  setTimeField: (filePath, timeField) =>
+  removeFile: (filePath) =>
     set((state) => {
-      state.timeFields[filePath] = timeField;
+      delete state.files[filePath];
+      state.series = state.series.filter((s) => s.filePath !== filePath);
     }),
-
-  getFileDisplayName: (filePath) => get().files[filePath].displayName,
 });
 
-// immer middleware
-// https://medium.com/plumguide/a-look-into-react-state-management-in-2021-5fc46a247e65
-function immer(conf: StateCreator<State>): StateCreator<State> {
-  return (set, get, api) => {
-    // Overwrite the `set` function with the `produce` method from Immer
-    return conf(
-      (partial, replace) => {
-        const nextState = typeof partial === 'function' ? produce(partial) : partial;
-        return set(nextState as any, replace);
-      },
-      get,
-      api
-    );
-  };
-}
-
-export const useStore = create(immer(config));
+export const useStore = create(immerMiddleware(config));

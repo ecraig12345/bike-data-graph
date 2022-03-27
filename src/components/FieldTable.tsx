@@ -29,7 +29,7 @@ const FieldTableRow: React.FunctionComponent<FieldTableRowProps> = (props) => {
   const { series } = props;
   const { yField: name, color, smooth, filePath, label } = series;
   const fileDisplayName = useStore(
-    React.useCallback((s) => s.getFileDisplayName(filePath), [filePath])
+    React.useCallback((s) => s.filesSettings[filePath].displayName, [filePath])
   );
   const { reorderSeries, removeSeries, updateSeries } = useStore.getState();
 
