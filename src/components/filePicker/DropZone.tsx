@@ -1,7 +1,6 @@
 import React from 'react';
 import dynamic from 'next/dynamic';
 import { mergeStyles } from '@fluentui/react/lib/Styling';
-import { Spinner } from '@fluentui/react';
 
 // https://react-dropzone.js.org/
 const ReactDropzone = dynamic(() => import('react-dropzone'));
@@ -17,6 +16,7 @@ const dropClass = mergeStyles({
   background: '#eee',
   display: 'flex',
   justifyContent: 'center',
+  cursor: 'pointer',
 });
 
 const DropZone: React.FunctionComponent<DropZoneProps> = (props) => {
@@ -47,7 +47,7 @@ const DropZone: React.FunctionComponent<DropZoneProps> = (props) => {
         return (
           <div {...getRootProps({ className: dropClass })}>
             <input {...getInputProps()} />
-            {isUploading ? <Spinner label="Uploading..." /> : 'Drop CSV files or click here'}
+            Drop CSV files or click here
           </div>
         );
       }}
