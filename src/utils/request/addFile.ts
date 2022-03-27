@@ -1,5 +1,5 @@
 import { fetcher } from './fetcher';
-import { FileInfo, ConvertFileBody, SeriesId, FileSettings } from '../../types';
+import { FileInfo, ConvertFileBody, FileSettings } from '../../types';
 import { useStore } from '../../store/useStore';
 
 export type AddFileResponse = {
@@ -7,8 +7,6 @@ export type AddFileResponse = {
   fileInfo: FileInfo;
   /** initial file mutable data, such as display name and timestamp field */
   fileMeta: FileSettings;
-  /** default series if fields with expected names are present (`timestamp`, `power*`) */
-  series?: SeriesId[];
 };
 
 /**
@@ -47,7 +45,10 @@ export async function addFile(
     let displayName = filePath.replace(/\\/g, '/');
     if (displayName.includes('/')) {
       const pathParts = displayName.split('/');
-      if (pathParts.length === 2 && pathParts[1].startsWith(pathParts[0])) {
+      if (
+        pathParts.length === 2 &&
+        pathParts[1].toLowerCase().startsWith(pathParts[0].toLowerCase())
+      ) {
         displayName = pathParts[1];
       }
     }
@@ -55,19 +56,11 @@ export async function addFile(
     const allFields = Object.keys(rawData[0]);
     Object.freeze(allFields);
 
-    // if timestamp and power fields are available with expected names, add to graph
     const timeField = allFields.find((f) => f.toLowerCase() === 'timestamp');
-    const graphFields = allFields.filter((f) => f.toLowerCase().startsWith('power'));
-    let series: SeriesId[] | undefined;
-    if (timeField && graphFields.length) {
-      // TODO ensure labels are unique
-      series = graphFields.map((f) => ({ filePath, yField: f }));
-    }
 
     return {
       fileInfo: { filePath, rawData, allFields },
       fileMeta: { displayName, timeField },
-      series,
     };
   } catch (err) {
     console.error('Error processing data', (err as Error).stack || err);

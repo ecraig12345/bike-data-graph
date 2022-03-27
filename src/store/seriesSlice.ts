@@ -21,13 +21,6 @@ export type SeriesSlice = {
 const findSeriesIndex = (state: SeriesSlice, ser: SeriesId) =>
   state.series.findIndex((s) => s.filePath === ser.filePath && s.yField === ser.yField);
 
-export const initSeries = (ser: SeriesId & Partial<SeriesMutable>): Series => ({
-  color: nextColor(),
-  smooth: 0,
-  label: ser.yField,
-  ...ser,
-});
-
 export const createSeriesSlice: StoreSlice<SeriesSlice> = (set) => ({
   series: [],
 
@@ -35,7 +28,12 @@ export const createSeriesSlice: StoreSlice<SeriesSlice> = (set) => ({
 
   addSeries: (ser) =>
     set((state) => {
-      state.series.push(initSeries(ser));
+      state.series.push({
+        color: nextColor(),
+        smooth: 0,
+        label: ser.yField,
+        ...ser,
+      });
     }),
 
   removeSeries: (ser) =>

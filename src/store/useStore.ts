@@ -3,7 +3,7 @@ import create, { StateCreator } from 'zustand';
 import { addFile, AddFileResponse } from '../utils/request/addFile';
 import { FileInfo, FileSettings, FilePath } from '../types';
 import immerMiddleware from './immerMiddleware';
-import { createSeriesSlice, initSeries, SeriesSlice } from './seriesSlice';
+import { createSeriesSlice, SeriesSlice } from './seriesSlice';
 
 export type State = SeriesSlice & {
   /** map from file path to file data */
@@ -13,8 +13,8 @@ export type State = SeriesSlice & {
   /** most recent error running `addFile` (cleared on success) */
   lastFetchError?: { filePath: string; error: string };
 
-  /** Fetch/convert file and possibly init related series */
-  addFile: (filePath: string, csvData?: string, addSeries?: boolean) => Promise<void>;
+  /** Fetch/convert a file */
+  addFile: (filePath: string, csvData?: string) => Promise<void>;
   /** Update settings for a file */
   updateFileSettings: (filePath: string, updates: Partial<FileSettings>) => void;
   /** Remove file and related series */
@@ -29,7 +29,7 @@ const config: StateCreator<State> = (set, get) => ({
 
   // NOTE: directly setting values on state because `set` is wrapped with immer `produce`
 
-  addFile: async (filePath, csvData, addSeries) => {
+  addFile: async (filePath, csvData) => {
     set((state) => {
       delete state.lastFetchError;
     });
@@ -42,12 +42,9 @@ const config: StateCreator<State> = (set, get) => ({
           state.lastFetchError = { filePath, error: (result as any).error };
         } else {
           delete state.lastFetchError;
-          const { fileInfo, fileMeta, series } = result as AddFileResponse;
+          const { fileInfo, fileMeta } = result as AddFileResponse;
           state.files[filePath] = fileInfo;
           state.filesSettings[filePath] = fileMeta;
-          if (series && addSeries) {
-            state.series.push(...series.map(initSeries));
-          }
         }
       });
     });
