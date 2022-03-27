@@ -152,9 +152,6 @@ function getChartOptions(seriesData: SeriesData[]) {
   // include 0 in case there are no series defined currently
   const yMax = Math.max(0, ...seriesData.map((s) => s.yMax));
   const yBound = yMax + (yTickStep - (yMax % yTickStep));
-  const displayName = Object.values(useStore.getState().filesSettings)
-    .map((f) => f.displayName)
-    .join(', ');
 
   const options: ChartOptions<'line'> = {
     animation: false,
@@ -184,16 +181,6 @@ function getChartOptions(seriesData: SeriesData[]) {
       // },
       legend: {
         position: 'bottom',
-      },
-      title: {
-        display: true,
-        text: displayName,
-        font: { size: 24 },
-      },
-      subtitle: {
-        display: true,
-        text: ['Pinch, scroll, or click and drag to zoom. Shift+drag to pan.', ''],
-        font: { size: 14 },
       },
       zoom: {
         limits: {
@@ -256,6 +243,7 @@ const ChartStuff: React.FunctionComponent = () => {
 
   return (
     <>
+      <div>Pinch, scroll, or click and drag to zoom. Shift+drag to pan.</div>
       {props && <LineChart {...props} />}
       <SeriesPicker />
     </>
