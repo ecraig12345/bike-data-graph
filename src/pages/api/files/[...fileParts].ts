@@ -3,7 +3,7 @@ import path from 'path';
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { dataRoot } from '../../../utils/server/constants';
 import { convert } from '../../../utils/server/convert';
-import type { ReadFileData } from '../../../utils/types';
+import type { ReadFileData } from '../../../types';
 
 export type ReadFileQuery = {
   fileParts: string[];

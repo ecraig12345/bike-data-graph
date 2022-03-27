@@ -1,5 +1,5 @@
 import { fetcher } from './fetcher';
-import { FileInfo, ConvertFileBody, SeriesId, FileSettings } from './types';
+import { FileInfo, ConvertFileBody, SeriesId, FileSettings } from '../../types';
 
 export type AddFileResponse = {
   /** file data and basic info */

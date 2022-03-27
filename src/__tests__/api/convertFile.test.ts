@@ -3,7 +3,7 @@ import path from 'path';
 import handler from '../../pages/api/convertFile';
 import { mockRequest, mockResponse } from '../../mocks/requestResponse';
 import { filePaths } from '../../mocks/filePaths';
-import { ConvertFileBody } from '../../utils/types';
+import { ConvertFileBody } from '../../types';
 
 function getBody(filePath: string) {
   const csvData = fs.readFileSync(filePath, 'utf8');

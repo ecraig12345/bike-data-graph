@@ -1,5 +1,5 @@
-import { ReadFileData } from '../types';
-import { convertField, getFieldDescriptionParts, maybeToNumber } from '../conversions';
+import { ReadFileData } from '../../types';
+import { convertField, getFieldDescriptionParts, maybeToNumber } from '../data/conversions';
 
 export class ConvertState {
   warnedUnits = new Set<string>();

@@ -1,6 +1,6 @@
 import { unstable_batchedUpdates } from 'react-dom';
 import create, { StateCreator } from 'zustand';
-import { addFile, AddFileResponse } from '../addFile';
+import { addFile, AddFileResponse } from '../utils/request/addFile';
 import { FileInfo, FileSettings, FilePath } from '../types';
 import immerMiddleware from './immerMiddleware';
 import { createSeriesSlice, initSeries, SeriesSlice } from './seriesSlice';

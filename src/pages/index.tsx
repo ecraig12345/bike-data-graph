@@ -1,9 +1,9 @@
 import React from 'react';
 import Head from 'next/head';
 import styles from '../styles/Home.module.css';
-import FilePicker from '../components/FilePicker';
-import ChartStuff from '../components/ChartStuff';
-import { State, useStore } from '../utils/store/useStore';
+import FilePicker from '../components/filePicker/FilePicker';
+import ChartStuff from '../components/chart/ChartStuff';
+import { State, useStore } from '../store/useStore';
 
 const filesSelector = (s: State) => s.files;
 

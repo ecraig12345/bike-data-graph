@@ -2,7 +2,7 @@ import { transform } from 'csv';
 import type { Transformer } from 'stream-transform';
 import { CsvInputOptions, readCsv } from './readCsv';
 import { streamToArray } from './streamToArray';
-import { ReadFileData } from '../types';
+import { ReadFileData } from '../../types';
 import { convertRecord, ConvertState } from './convertRecord';
 
 function getFileFormat(filePath: string) {

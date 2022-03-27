@@ -1,4 +1,4 @@
-import { nextColor } from '../randomColor';
+import { nextColor } from '../utils/chart/randomColor';
 import { Series, SeriesId, SeriesMutable } from '../types';
 import { StoreSlice } from './types';
 

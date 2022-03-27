@@ -3,7 +3,7 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 import fs from 'fs-extra';
 import path from 'path';
 import { dataRoot } from '../../utils/server/constants';
-import { FilesData } from '../../utils/types';
+import { FilesData } from '../../types';
 
 const absolute = (...segments: string[]) => path.join(dataRoot, ...segments);
 

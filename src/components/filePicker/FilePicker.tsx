@@ -3,9 +3,9 @@ import { Spinner, SpinnerSize } from '@fluentui/react/lib/Spinner';
 import { mergeStyles } from '@fluentui/react/lib/Styling';
 import LocalFileList from './LocalFileList';
 import DropZone from './DropZone';
-import { State, useStore } from '../utils/store/useStore';
-import Details from './Details';
-import Error from './Error';
+import { State, useStore } from '../../store/useStore';
+import Details from '../basic/Details';
+import Error from '../basic/Error';
 
 const lastFetchErrorSelector = (s: State) => s.lastFetchError;
 const filesSelector = (s: State) => s.files;

@@ -1,6 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { convert } from '../../utils/server/convert';
-import { ConvertFileBody, ReadFileData } from '../../utils/types';
+import { ConvertFileBody, ReadFileData } from '../../types';
 
 export default async function handler(
   req: NextApiRequest,

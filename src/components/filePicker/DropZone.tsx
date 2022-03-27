@@ -1,7 +1,7 @@
 import React from 'react';
 import dynamic from 'next/dynamic';
 import { mergeStyles } from '@fluentui/react/lib/Styling';
-import Error from './Error';
+import Error from '../basic/Error';
 
 // https://react-dropzone.js.org/
 const ReactDropzone = dynamic(() => import('react-dropzone'));

@@ -1,5 +1,5 @@
 import React from 'react';
-import { cloneData, setDatasets } from '../utils/chartUtils';
+import { cloneData, setDatasets } from '../../utils/chart/chartUtils';
 
 import {
   ChartData,

@@ -1,11 +1,11 @@
 import React from 'react';
 import dynamic from 'next/dynamic';
 import type { ChartDataset, ChartOptions, ScatterDataPoint } from 'chart.js';
-import { State, useStore } from '../utils/store/useStore';
-import FieldPicker from './FieldPicker';
-import { FilePath, FileSettings, Series } from '../utils/types';
+import { State, useStore } from '../../store/useStore';
+import SeriesPicker from '../seriesPicker/SeriesPicker';
+import { FilePath, FileSettings, Series } from '../../types';
 import type { LineChartProps } from './LineChart';
-import { smooth } from '../utils/smooth';
+import { smooth } from '../../utils/data/smooth';
 
 const LineChart = dynamic(
   () => import('./LineChart'),
@@ -257,7 +257,7 @@ const ChartStuff: React.FunctionComponent = () => {
   return (
     <>
       {props && <LineChart {...props} />}
-      <FieldPicker />
+      <SeriesPicker />
     </>
   );
 };

@@ -1,7 +1,7 @@
 import handler, { ReadFileQuery } from '../../pages/api/files/[...fileParts]';
 import { mockRequest, mockResponse } from '../../mocks/requestResponse';
 import { filePaths } from '../../mocks/filePaths';
-import { ReadFileData } from '../../utils/types';
+import { ReadFileData } from '../../types';
 
 describe('api/files/[...fileParts]', () => {
   it('errors on file not found', async () => {

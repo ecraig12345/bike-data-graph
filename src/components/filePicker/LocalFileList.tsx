@@ -2,10 +2,10 @@ import React from 'react';
 import { Link } from '@fluentui/react/lib/Link';
 import { Spinner, SpinnerSize } from '@fluentui/react/lib/Spinner';
 import { mergeStyles } from '@fluentui/react/lib/Styling';
-import { fetcher } from '../utils/fetcher';
-import { FilesData } from '../utils/types';
-import Details from './Details';
-import Error from './Error';
+import { fetcher } from '../../utils/request/fetcher';
+import { FilesData } from '../../types';
+import Details from '../basic/Details';
+import Error from '../basic/Error';
 
 export type LocalFileListProps = {
   className?: string;

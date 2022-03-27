@@ -2,11 +2,11 @@ import React from 'react';
 import { IconButton } from '@fluentui/react/lib/Button';
 import { SpinButton, ISpinButtonProps, ISpinButtonStyles } from '@fluentui/react/lib/SpinButton';
 import { mergeStyles } from '@fluentui/react/lib/Styling';
-import { State, useStore } from '../utils/store/useStore';
-import { Series } from '../utils/types';
-import TextFieldLazy from './TextFieldLazy';
+import { State, useStore } from '../../store/useStore';
+import { Series } from '../../types';
+import TextFieldLazy from '../basic/TextFieldLazy';
 
-type FieldTableRowProps = {
+type SeriesTableRowProps = {
   series: Series;
 };
 
@@ -25,7 +25,7 @@ const downIconProps = { iconName: 'ChevronDown' };
 const upIconProps = { iconName: 'ChevronUp' };
 const removeIconProps = { iconName: 'Cancel' };
 
-const FieldTableRow: React.FunctionComponent<FieldTableRowProps> = (props) => {
+const SeriesTableRow: React.FunctionComponent<SeriesTableRowProps> = (props) => {
   const { series } = props;
   const { yField: name, color, smooth, filePath, label } = series;
   const fileDisplayName = useStore(
@@ -78,7 +78,7 @@ const FieldTableRow: React.FunctionComponent<FieldTableRowProps> = (props) => {
 
 const seriesSelector = (s: State) => s.series;
 
-const FieldTable: React.FunctionComponent = () => {
+const SeriesTable: React.FunctionComponent = () => {
   const allSeries = useStore(seriesSelector);
 
   return (
@@ -92,11 +92,11 @@ const FieldTable: React.FunctionComponent = () => {
       </thead>
       <tbody>
         {allSeries.map((s) => (
-          <FieldTableRow key={s.filePath + s.yField} series={s} />
+          <SeriesTableRow key={s.filePath + s.yField} series={s} />
         ))}
       </tbody>
     </table>
   );
 };
 
-export default FieldTable;
+export default SeriesTable;

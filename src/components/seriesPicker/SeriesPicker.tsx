@@ -6,9 +6,9 @@ import {
   IDropdownStyles,
 } from '@fluentui/react/lib/Dropdown';
 import shallow from 'zustand/shallow';
-import FieldTable from './FieldTable';
-import { State, useStore } from '../utils/store/useStore';
-import { FileInfo } from '../utils/types';
+import SeriesTable from './SeriesTable';
+import { State, useStore } from '../../store/useStore';
+import { FileInfo } from '../../types';
 
 type DropdownOnChange = Required<IDropdownProps>['onChange'];
 
@@ -23,7 +23,7 @@ const selector = (s: State) => ({
   series: s.series,
 });
 
-const FieldPicker: React.FunctionComponent = () => {
+const SeriesPicker: React.FunctionComponent = () => {
   const { files, filesSettings, series } = useStore(selector, shallow);
 
   // TODO support multiple files
@@ -88,9 +88,9 @@ const FieldPicker: React.FunctionComponent = () => {
       />
       <br />
       <br />
-      <FieldTable />
+      <SeriesTable />
     </div>
   );
 };
 
-export default FieldPicker;
+export default SeriesPicker;
