@@ -1,5 +1,6 @@
 import { fetcher } from './fetcher';
 import { FileInfo, ConvertFileBody, SeriesId, FileSettings } from '../../types';
+import { useStore } from '../../store/useStore';
 
 export type AddFileResponse = {
   /** file data and basic info */
@@ -19,6 +20,10 @@ export async function addFile(
   filePath: string,
   csvData?: string
 ): Promise<AddFileResponse | { error: string }> {
+  if (useStore.getState().files[filePath]) {
+    return { error: 'This file (or one with the same name) was already loaded' };
+  }
+
   let rawData: FileInfo['rawData'];
   try {
     if (csvData) {
