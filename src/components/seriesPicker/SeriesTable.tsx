@@ -1,18 +1,20 @@
 import React from 'react';
 import { IconButton } from '@fluentui/react/lib/Button';
+import { cssColor, rgb2hex } from '@fluentui/react/lib/Color';
 import { SpinButton, ISpinButtonProps, ISpinButtonStyles } from '@fluentui/react/lib/SpinButton';
 import { mergeStyles } from '@fluentui/react/lib/Styling';
 import { State, useStore } from '../../store/useStore';
 import { Series } from '../../types';
 import TextFieldLazy from '../basic/TextFieldLazy';
 import Table from '../basic/Table';
+import ColorInput, { ColorInputProps } from '../basic/ColorInput';
 
 type SeriesTableRowProps = {
   series: Series;
 };
 
 /** ending headers are down, up, remove */
-const headers = ['Field', 'From file', 'Label', 'Smooth', '', '', ''] as const;
+const headers = ['Field', 'From file', 'Label', 'Smooth', 'Color', '', '', ''] as const;
 
 const className = mergeStyles({
   'th:first-child': { width: '20%' },
@@ -32,24 +34,38 @@ const removeIconProps = { iconName: 'Cancel' };
 
 const SeriesTableRow: React.FunctionComponent<SeriesTableRowProps> = (props) => {
   const { series } = props;
-  const { yField: name, color, smooth, filePath, label } = series;
+  const { yField: name, smooth, filePath, label } = series;
   const fileDisplayName = useStore(
     React.useCallback((s) => s.filesSettings[filePath].displayName, [filePath])
   );
-  const { reorderSeries, removeSeries, updateSeries } = useStore.getState();
+  const color = React.useMemo(() => {
+    const c = cssColor(series.color);
+    return c ? `#${rgb2hex(c.r, c.g, c.b)}` : series.color;
+  }, [series.color]);
 
   const onLabelChange = React.useCallback(
-    (_ev, newValue?: string) => updateSeries(series, { label: newValue || '' }),
-    [series, updateSeries]
+    (_ev, newValue?: string) => useStore.getState().updateSeries(series, { label: newValue || '' }),
+    [series]
   );
 
-  const onSmoothChange: ISpinButtonProps['onChange'] = React.useCallback(
-    (_ev, newValue?) => updateSeries(series, { smooth: Number(newValue || 0) }),
-    [series, updateSeries]
+  const onSmoothChange = React.useCallback<NonNullable<ISpinButtonProps['onChange']>>(
+    (_ev, newValue?) => useStore.getState().updateSeries(series, { smooth: Number(newValue || 0) }),
+    [series]
   );
-  const moveUp = React.useCallback(() => reorderSeries(series, 'up'), [reorderSeries, series]);
-  const moveDown = React.useCallback(() => reorderSeries(series, 'down'), [reorderSeries, series]);
-  const remove = React.useCallback(() => removeSeries(series), [removeSeries, series]);
+
+  const onColorChange = React.useCallback<NonNullable<ColorInputProps['onChange']>>(
+    (ev) => {
+      ev.target.value && useStore.getState().updateSeries(series, { color: ev.target.value });
+    },
+    [series]
+  );
+
+  const moveUp = React.useCallback(() => useStore.getState().reorderSeries(series, 'up'), [series]);
+  const moveDown = React.useCallback(
+    () => useStore.getState().reorderSeries(series, 'down'),
+    [series]
+  );
+  const remove = React.useCallback(() => useStore.getState().removeSeries(series), [series]);
 
   return (
     <tr>
@@ -69,6 +85,9 @@ const SeriesTableRow: React.FunctionComponent<SeriesTableRowProps> = (props) => 
         />
       </td>
       <td>
+        <ColorInput value={color} title="Color" onChange={onColorChange} />
+      </td>
+      <td>
         <IconButton onClick={moveDown} title="Move down" iconProps={downIconProps} />
       </td>
       <td>
@@ -85,6 +104,10 @@ const seriesSelector = (s: State) => s.series;
 
 const SeriesTable: React.FunctionComponent = () => {
   const allSeries = useStore(seriesSelector);
+
+  if (!allSeries.length) {
+    return null;
+  }
 
   return (
     <Table className={className}>
