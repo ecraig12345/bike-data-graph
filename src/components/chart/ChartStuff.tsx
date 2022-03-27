@@ -5,7 +5,7 @@ import { State, useStore } from '../../store/useStore';
 import SeriesPicker from '../seriesPicker/SeriesPicker';
 import { FilePath, FileSettings, Series } from '../../types';
 import type { LineChartProps } from './LineChart';
-import { smooth } from '../../utils/data/smooth';
+import { smooth } from '../../utils/chart/smooth';
 
 const LineChart = dynamic(
   () => import('./LineChart'),
