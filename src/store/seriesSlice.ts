@@ -28,6 +28,9 @@ export const createSeriesSlice: StoreSlice<SeriesSlice> = (set) => ({
 
   addSeries: (ser) =>
     set((state) => {
+      if (state.series.some((s) => s.filePath === ser.filePath && s.yField === ser.yField)) {
+        throw new Error(`Series already exists for "${ser.filePath}" and "${ser.yField}"`);
+      }
       state.series.push({
         color: nextColor(),
         smooth: 0,

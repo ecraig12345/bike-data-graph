@@ -5,13 +5,12 @@ import {
   IDropdownOption,
   IDropdownProps,
   IDropdownStyles,
+  IDropdown,
 } from '@fluentui/react/lib/Dropdown';
 import { mergeStyleSets } from '@fluentui/react/lib/Styling';
 import shallow from 'zustand/shallow';
 import SeriesTable from './SeriesTable';
 import { State, useStore } from '../../store/useStore';
-
-type DropdownOnChange = Required<IDropdownProps>['onChange'];
 
 const dropdownStyles: Partial<IDropdownStyles> = {
   root: { display: 'inline-flex', gap: 10, width: 250, '.ms-layer': { display: 'none' } },
@@ -43,7 +42,7 @@ const selector = (s: State) => ({
 const SeriesPicker: React.FunctionComponent = () => {
   const { files, filesSettings, series } = useStore(selector, shallow);
   const [selectedFilePath, setSelectedFilePath] = React.useState<string>();
-  const [selectedField, setSelectedField] = React.useState<string>();
+  const fieldsDropdownRef = React.useRef<IDropdown>(null);
 
   const filesOptions = React.useMemo(
     () =>
@@ -57,10 +56,12 @@ const SeriesPicker: React.FunctionComponent = () => {
         ),
     [filesSettings]
   );
-  const onFilesDropdownChange = React.useCallback<DropdownOnChange>((ev, option) => {
-    setSelectedFilePath(option!.key as string);
-    setSelectedField(undefined);
-  }, []);
+  const onFilesDropdownChange = React.useCallback<NonNullable<IDropdownProps['onChange']>>(
+    (ev, option) => {
+      setSelectedFilePath(option!.key as string);
+    },
+    []
+  );
 
   const fieldOptions = React.useMemo(() => {
     if (!selectedFilePath) return [];
@@ -73,13 +74,26 @@ const SeriesPicker: React.FunctionComponent = () => {
       .map((f): IDropdownOption => ({ key: f, text: f }));
   }, [selectedFilePath, files, filesSettings, series]);
 
-  const onFieldDropdownChange = React.useCallback<DropdownOnChange>((ev, option) => {
-    setSelectedField(option!.key as string);
-  }, []);
-
   const onAddClick = React.useCallback(() => {
-    useStore.getState().addSeries({ filePath: selectedFilePath!, yField: selectedField! });
-  }, [selectedField, selectedFilePath]);
+    // Accurately tracking and updating or invalidating the selected field through all types of
+    // updates turns out to be difficult, so:
+    // - pull the latest value from the field instead of trying to follow changes
+    // - just alert if nothing has been chosen instead of disabling the button
+    const selectedField = fieldsDropdownRef.current?.selectedOptions[0]?.key as string | undefined;
+    if (selectedField) {
+      useStore.getState().addSeries({ filePath: selectedFilePath!, yField: selectedField! });
+    } else {
+      alert('Please select a field');
+    }
+  }, [selectedFilePath]);
+
+  React.useEffect(() => {
+    if (selectedFilePath && !filesSettings[selectedFilePath]) {
+      setSelectedFilePath(undefined);
+    }
+    // clear state if the file is deleted
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filesOptions]);
 
   return (
     <div className={styles.root}>
@@ -98,10 +112,10 @@ const SeriesPicker: React.FunctionComponent = () => {
             label="Field"
             disabled={!fieldOptions.length}
             options={fieldOptions}
-            onChange={onFieldDropdownChange}
             styles={dropdownStyles}
+            componentRef={fieldsDropdownRef}
           />
-          <PrimaryButton disabled={!selectedField} onClick={onAddClick}>
+          <PrimaryButton disabled={!selectedFilePath} onClick={onAddClick}>
             Add
           </PrimaryButton>
         </div>

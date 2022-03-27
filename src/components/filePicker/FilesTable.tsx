@@ -46,7 +46,7 @@ const FilesTableRow: React.FunctionComponent<FilesTableRowProps> = (props) => {
     () => allFields?.map((f): IDropdownOption => ({ key: f, text: f })),
     [allFields]
   );
-  const onDropdownChange = React.useCallback<Required<IDropdownProps>['onChange']>(
+  const onDropdownChange = React.useCallback<NonNullable<IDropdownProps['onChange']>>(
     (_ev, option) => {
       useStore.getState().updateFileSettings(filePath!, { timeField: option!.key as string });
     },
