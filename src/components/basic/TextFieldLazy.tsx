@@ -1,6 +1,10 @@
 import React from 'react';
 import { TextField, ITextFieldProps } from '@fluentui/react/lib/TextField';
 
+export type TextFieldLazyProps = Omit<ITextFieldProps, 'defaultValue' | 'value'> & {
+  value: string;
+};
+
 /**
  * TextField wrapper which is controlled (takes `value` prop only) but is "lazy" about notifying
  * of edits: it tracks state internally while focused and only calls `onChange` on blur.
@@ -8,7 +12,7 @@ import { TextField, ITextFieldProps } from '@fluentui/react/lib/TextField';
  * Motivation: often in this app, updating a TextField will update a chart, and doing that
  * on every keystroke is noticeably very slow for larger data sets.
  */
-const TextFieldLazy: React.FunctionComponent<Omit<ITextFieldProps, 'defaultValue'>> = (props) => {
+const TextFieldLazy: React.FunctionComponent<TextFieldLazyProps> = (props) => {
   const {
     onBlur: propsOnBlur,
     onFocus: propsOnFocus,

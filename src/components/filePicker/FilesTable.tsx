@@ -9,13 +9,15 @@ import { IconButton } from '@fluentui/react/lib/Button';
 import { mergeStyles } from '@fluentui/react/lib/Styling';
 import { State, useStore } from '../../store/useStore';
 import { FileInfo, FileSettings } from '../../types';
-import TextFieldLazy from '../basic/TextFieldLazy';
+import TextFieldLazy, { TextFieldLazyProps } from '../basic/TextFieldLazy';
 import Table from '../basic/Table';
 
 type FilesTableRowProps = FileInfo & FileSettings;
 
 /** last header is remove */
-const headers = ['Name', 'Display name', 'Time field', 'Time offset', ''] as const;
+const headers = ['Name', 'Display name', 'Time field', 'Offset (min)', ''] as const;
+
+const msInMinute = 60 * 1000;
 
 const className = mergeStyles({
   // original name
@@ -24,7 +26,16 @@ const className = mergeStyles({
   'td:nth-child(2)': { width: '30%' },
   // time field
   'td:nth-child(3)': { width: '20%' },
+  'input[type="number"]::-webkit-outer-spin-button,input[type="number"]::-webkit-inner-spin-button':
+    {
+      '-webkit-appearance': 'none',
+      margin: 0,
+    },
+  'input[type="number"]': {
+    '-moz-appearance': 'textfield',
+  },
 });
+
 const dropdownStyles: Partial<IDropdownStyles> = {
   // dropdown: { width: 150 },
   dropdownOptionText: { overflow: 'visible', whiteSpace: 'normal' },
@@ -53,6 +64,17 @@ const FilesTableRow: React.FunctionComponent<FilesTableRowProps> = (props) => {
     [filePath]
   );
 
+  const onOffsetChange = React.useCallback<NonNullable<TextFieldLazyProps['onChange']>>(
+    (_ev, newValue) => {
+      if (newValue && !isNaN(Number(newValue))) {
+        useStore
+          .getState()
+          .updateFileSettings(filePath!, { offset: Math.round(Number(newValue) * msInMinute) });
+      }
+    },
+    [filePath]
+  );
+
   const remove = React.useCallback(() => useStore.getState().removeFile(filePath), [filePath]);
 
   return (
@@ -70,7 +92,14 @@ const FilesTableRow: React.FunctionComponent<FilesTableRowProps> = (props) => {
           styles={dropdownStyles}
         />
       </td>
-      <td>{offset || '...'}</td>
+      <td>
+        <TextFieldLazy
+          title="Offset"
+          value={String(Number(offset) / msInMinute || 0)}
+          onChange={onOffsetChange}
+          type="number"
+        />
+      </td>
       <td>
         <IconButton onClick={remove} title="Remove" iconProps={removeIconProps} />
       </td>

@@ -18,7 +18,7 @@ const filesSettingsSelector = (s: State) => s.filesSettings;
 const seriesSelector = (s: State) => s.series;
 
 /** Time series data: field name and values from a particular file */
-type TimeSeriesData = { fieldName: string; values: number[] };
+type TimeSeriesData = { fieldName: string; offset?: number; values: number[] };
 /** Map from file path to time series data */
 type TimeSeriesRecord = Record<FilePath, TimeSeriesData>;
 /** Complete data points for a particular series */
@@ -36,6 +36,10 @@ type SeriesData = {
   yMax: number;
 };
 
+function getTimeSeriesKeyParts(filePath: string, fileSettings: FileSettings) {
+  return [filePath, fileSettings.timeField, fileSettings.offset];
+}
+
 /**
  * get a ref with cached time series values, updating when files and/or time fields update
  * (a more tailored approach to memoizing and recalculating)
@@ -46,10 +50,9 @@ function useTimeSeries() {
   const timeFieldsKey = React.useMemo(
     () =>
       JSON.stringify(
-        Object.entries(filesSettings).map(([filePath, fileSettings]) => [
-          filePath,
-          fileSettings.timeField,
-        ])
+        Object.entries(filesSettings).map(([filePath, fileSettings]) =>
+          getTimeSeriesKeyParts(filePath, fileSettings)
+        )
       ),
     [filesSettings]
   );
@@ -62,15 +65,22 @@ function useTimeSeries() {
     const oldTimeSeries = timeSeries.current;
     const newTimeSeries: typeof oldTimeSeries = {};
 
-    for (const [filePath, { timeField }] of Object.entries(filesSettings)) {
-      if (timeField && oldTimeSeries[filePath]?.fieldName === timeField) {
-        // same time field name => don't re-calculate (the raw data never changes)
-        newTimeSeries[filePath] = oldTimeSeries[filePath];
-      } else if (timeField) {
-        // new file or newly-set time field => calculate
+    for (const [filePath, { timeField, offset }] of Object.entries(filesSettings)) {
+      if (!timeField) {
+        continue;
+      }
+      const oldData = oldTimeSeries[filePath];
+      if (oldData?.fieldName === timeField && (oldData.offset || 0) === (offset || 0)) {
+        // same time field name and offset => don't re-calculate (the raw data never changes)
+        newTimeSeries[filePath] = oldData;
+      } else {
+        // new file, newly-set time field, or updated offset => calculate
         newTimeSeries[filePath] = {
           fieldName: timeField,
-          values: files[filePath].rawData.map((r) => new Date(r[timeField]).getTime()),
+          offset,
+          values: files[filePath].rawData.map(
+            (r) => new Date(r[timeField]).getTime() + (offset || 0)
+          ),
         };
       }
     }
@@ -85,10 +95,9 @@ function useTimeSeries() {
 /** get a key for a series object INCLUDING time data */
 function getCompleteSeriesKey(ser: Series, filesSettings: Record<FilePath, FileSettings>) {
   return JSON.stringify([
-    ser.filePath,
     ser.yField,
     ser.smooth,
-    filesSettings[ser.filePath].timeField,
+    ...getTimeSeriesKeyParts(ser.filePath, filesSettings[ser.filePath]),
   ]);
 }
 /** get a key for a series object NOT including time data */

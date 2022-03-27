@@ -5,7 +5,7 @@ import { SpinButton, ISpinButtonProps, ISpinButtonStyles } from '@fluentui/react
 import { mergeStyles } from '@fluentui/react/lib/Styling';
 import { State, useStore } from '../../store/useStore';
 import { Series } from '../../types';
-import TextFieldLazy from '../basic/TextFieldLazy';
+import TextFieldLazy, { TextFieldLazyProps } from '../basic/TextFieldLazy';
 import Table from '../basic/Table';
 import ColorInput, { ColorInputProps } from '../basic/ColorInput';
 
@@ -39,17 +39,18 @@ const SeriesTableRow: React.FunctionComponent<SeriesTableRowProps> = (props) => 
     React.useCallback((s) => s.filesSettings[filePath].displayName, [filePath])
   );
   const color = React.useMemo(() => {
+    // the default colors are names, which the color input doesn't support
     const c = cssColor(series.color);
     return c ? `#${rgb2hex(c.r, c.g, c.b)}` : series.color;
   }, [series.color]);
 
-  const onLabelChange = React.useCallback(
-    (_ev, newValue?: string) => useStore.getState().updateSeries(series, { label: newValue || '' }),
+  const onLabelChange = React.useCallback<NonNullable<TextFieldLazyProps['onChange']>>(
+    (_ev, newValue) => useStore.getState().updateSeries(series, { label: newValue || '' }),
     [series]
   );
 
   const onSmoothChange = React.useCallback<NonNullable<ISpinButtonProps['onChange']>>(
-    (_ev, newValue?) => useStore.getState().updateSeries(series, { smooth: Number(newValue || 0) }),
+    (_ev, newValue) => useStore.getState().updateSeries(series, { smooth: Number(newValue || 0) }),
     [series]
   );
 
