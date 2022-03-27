@@ -1,9 +1,33 @@
 import React from 'react';
 import Head from 'next/head';
-import styles from '../styles/Home.module.css';
+import { mergeStyleSets } from '@fluentui/react/lib/Styling';
 import FilePicker from '../components/filePicker/FilePicker';
 import ChartStuff from '../components/chart/ChartStuff';
 import { State, useStore } from '../store/useStore';
+
+const styles = mergeStyleSets({
+  container: {
+    minHeight: '100vh',
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  main: {
+    padding: '3rem 80px',
+    flex: '1',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '1em',
+    width: '100%',
+  },
+  title: {
+    margin: '0',
+    marginBottom: '1rem',
+    fontSize: '2.5rem',
+    textAlign: 'center',
+  },
+});
 
 const filesSelector = (s: State) => s.files;
 

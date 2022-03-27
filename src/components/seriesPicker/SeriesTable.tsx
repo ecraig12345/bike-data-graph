@@ -11,7 +11,6 @@ type SeriesTableRowProps = {
 };
 
 const className = mergeStyles({
-  'td, th': { padding: 2, paddingRight: 10, textAlign: 'center' },
   'th:first-child': { width: 100, textAlign: 'right' },
 });
 

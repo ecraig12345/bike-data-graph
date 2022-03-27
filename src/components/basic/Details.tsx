@@ -4,7 +4,7 @@ import { css } from '@fluentui/react/lib/Utilities';
 
 const rootClass = mergeStyles({
   paddingLeft: '1em',
-  '> summary': { cursor: 'pointer', marginLeft: '-1em', marginBottom: '0.5em' },
+  '> summary': { marginLeft: '-1em', marginBottom: '0.5em' },
 });
 
 export type DetailsProps = React.DetailsHTMLAttributes<HTMLDetailsElement> & {

@@ -21,7 +21,6 @@ const rootClass = mergeStyles({
   width: '100%',
   '*': { lineHeight: '1.5em' },
   ul: { marginTop: '0.2em' },
-  summary: { cursor: 'pointer' },
 });
 
 async function listFolders(onFileSelected: LocalFileListProps['onFileSelected']) {
