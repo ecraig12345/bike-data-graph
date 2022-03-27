@@ -1,4 +1,4 @@
-import { convertField, getFieldDescriptionParts } from '../../utils/data/conversions';
+import { convertField, getFieldDescriptionParts } from '../../utils/server/conversions';
 
 const knownFields = [
   'record.timestamp[s]',

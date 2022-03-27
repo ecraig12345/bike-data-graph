@@ -29,7 +29,7 @@ async function listFolders(onFileSelected: LocalFileListProps['onFileSelected'])
   try {
     data = await fetcher('api/files');
   } catch (error) {
-    return { error: String(error) };
+    return { error: (error as Error).message || String(error) };
   }
 
   const folders: Folder[] = data.map((folder) => ({
@@ -48,7 +48,8 @@ async function listFolders(onFileSelected: LocalFileListProps['onFileSelected'])
 const LocalFileList: React.FunctionComponent<LocalFileListProps> = (props) => {
   const { onFileSelected } = props;
   const [hasOpened, setHasOpened] = React.useState(false);
-  const [{ folders, error }, setListFoldersResult] = React.useState<ListFoldersResult>({});
+  const [{ folders, error: listFoldersError }, setListFoldersResult] =
+    React.useState<ListFoldersResult>({});
 
   const onOpenChange = () => {
     !hasOpened && setHasOpened(true);
@@ -84,8 +85,8 @@ const LocalFileList: React.FunctionComponent<LocalFileListProps> = (props) => {
             </ul>
           </details>
         ))
-      ) : error ? (
-        <Error>{error}</Error>
+      ) : listFoldersError ? (
+        <Error>{listFoldersError}</Error>
       ) : (
         <Spinner label="Loading..." size={SpinnerSize.large} />
       )}

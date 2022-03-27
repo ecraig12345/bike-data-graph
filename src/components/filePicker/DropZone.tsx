@@ -1,13 +1,13 @@
 import React from 'react';
 import dynamic from 'next/dynamic';
 import { mergeStyles } from '@fluentui/react/lib/Styling';
-import Error from '../basic/Error';
+import { Spinner } from '@fluentui/react';
 
 // https://react-dropzone.js.org/
 const ReactDropzone = dynamic(() => import('react-dropzone'));
 
 export type DropZoneProps = {
-  onFileSelected: (filePath: string, data: string) => void;
+  onFileSelected: (file: File) => Promise<boolean>;
 };
 
 const dropClass = mergeStyles({
@@ -21,44 +21,33 @@ const dropClass = mergeStyles({
 
 const DropZone: React.FunctionComponent<DropZoneProps> = (props) => {
   const { onFileSelected } = props;
-  const [error, setError] = React.useState<string>();
+  const [isUploading, setIsUploading] = React.useState(false);
 
   const onDrop = React.useCallback(
-    (acceptedFiles: File[]) => {
-      setError('');
-      // TOOD handle multiple files
-      const file = acceptedFiles[0];
-      const reader = new FileReader();
+    async (acceptedFiles: File[]) => {
+      setIsUploading(true);
 
-      reader.onabort = () => setError('File reading aborted');
-      reader.onerror = () => setError('Error reading file');
-      reader.onload = () => {
-        const result =
-          typeof reader.result === 'string'
-            ? reader.result
-            : new TextDecoder('utf-8').decode(reader.result as ArrayBuffer);
-        onFileSelected(file.name, result);
-      };
+      for (const file of acceptedFiles) {
+        const success = await onFileSelected(file);
+        if (!success) {
+          // It's simplest to just stop after the first error, but ideally this would
+          // continue reading subsequent files if one fails
+          break;
+        }
+      }
 
-      reader.readAsArrayBuffer(file);
+      setIsUploading(false);
     },
     [onFileSelected]
   );
 
   return (
-    // TODO accept multiple files
-    <ReactDropzone maxFiles={1} onDrop={onDrop} accept="text/csv">
+    <ReactDropzone disabled={isUploading} onDrop={onDrop} accept="text/csv">
       {({ getRootProps, getInputProps }) => {
         return (
           <div {...getRootProps({ className: dropClass })}>
             <input {...getInputProps()} />
-            Drop file or click here
-            {error && (
-              <Error>
-                <br />
-                {error}
-              </Error>
-            )}
+            {isUploading ? <Spinner label="Uploading..." /> : 'Drop CSV files or click here'}
           </div>
         );
       }}

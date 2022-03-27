@@ -22,9 +22,9 @@ const FilePicker: React.FunctionComponent = () => {
   const lastFetchError = useStore(lastFetchErrorSelector);
   const files = useStore(filesSelector);
 
-  const onFileSelected = React.useCallback((filePath: string, csvData?: string) => {
-    setLoadingFile(filePath);
-    useStore.getState().addFile(filePath, csvData);
+  const onFileSelected = React.useCallback((file: string | File) => {
+    setLoadingFile(typeof file === 'string' ? file : file.name);
+    return useStore.getState().addFile(file);
   }, []);
 
   React.useEffect(() => {
@@ -36,7 +36,7 @@ const FilePicker: React.FunctionComponent = () => {
   return (
     <Details summary="Select files" defaultIsOpen className={rootClass}>
       {loadingFile ? (
-        <Spinner label="Loading file..." size={SpinnerSize.large} />
+        <Spinner label={`Loading ${loadingFile}...`} size={SpinnerSize.large} />
       ) : (
         <>
           <DropZone onFileSelected={onFileSelected} />

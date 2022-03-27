@@ -1,6 +1,7 @@
-import { fetcher } from './fetcher';
 import { FileInfo, ConvertFileBody, FileSettings } from '../../types';
 import { useStore } from '../../store/useStore';
+import { fetcher } from './fetcher';
+import readFile from './readFile';
 
 export type AddFileResponse = {
   /** file data and basic info */
@@ -10,16 +11,19 @@ export type AddFileResponse = {
 };
 
 /**
- * Read and/or parse a CSV file using the server.
- * @param filePath File path, usually to read from
- * @param csvData CSV data if the file was already loaded via drag/drop
+ * Read and/or parse a CSV file using the server. Throws an exception on error.
+ * @param file File path or object
  */
-export async function addFile(
-  filePath: string,
-  csvData?: string
-): Promise<AddFileResponse | { error: string }> {
+export async function addFile(file: string | File): Promise<AddFileResponse> {
+  const filePath = typeof file === 'string' ? file : file.name;
   if (useStore.getState().files[filePath]) {
-    return { error: 'This file (or one with the same name) was already loaded' };
+    throw new Error('This file (or one with the same name) was already loaded');
+  }
+
+  let csvData: string | undefined;
+  if (typeof file !== 'string') {
+    // this may throw if there's an error reading the file
+    csvData = await readFile(file);
   }
 
   let rawData: FileInfo['rawData'];
@@ -34,7 +38,7 @@ export async function addFile(
       rawData = await fetcher(`api/files/${filePath}`);
     }
   } catch (err) {
-    return { error: `Error fetching data: ${err}` };
+    throw new Error(`Error fetching data: ${err}`);
   }
 
   try {
@@ -64,6 +68,6 @@ export async function addFile(
     };
   } catch (err) {
     console.error('Error processing data', (err as Error).stack || err);
-    return { error: `Error processing data: ${err}` };
+    throw new Error(`Error processing data: ${err}`);
   }
 }

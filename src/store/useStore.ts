@@ -13,8 +13,8 @@ export type State = SeriesSlice & {
   /** most recent error running `addFile` (cleared on success) */
   lastFetchError?: { filePath: string; error: string };
 
-  /** Fetch/convert a file */
-  addFile: (filePath: string, csvData?: string) => Promise<void>;
+  /** Fetch/convert a file. Returns true if it succeeded. */
+  addFile: (file: string | File) => Promise<boolean>;
   /** Update settings for a file */
   updateFileSettings: (filePath: string, updates: Partial<FileSettings>) => void;
   /** Remove file and related series */
@@ -29,25 +29,32 @@ const config: StateCreator<State> = (set, get) => ({
 
   // NOTE: directly setting values on state because `set` is wrapped with immer `produce`
 
-  addFile: async (filePath, csvData) => {
+  addFile: async (file) => {
     set((state) => {
       delete state.lastFetchError;
     });
 
-    const result = await addFile(filePath, csvData);
+    const filePath = typeof file === 'string' ? file : file.name;
+    let result: AddFileResponse;
+    try {
+      result = await addFile(file);
+    } catch (err) {
+      set((state) => {
+        state.lastFetchError = { filePath, error: (err as Error).message || String(err) };
+      });
+      return false;
+    }
 
     unstable_batchedUpdates(() => {
       set((state) => {
-        if ((result as any).error) {
-          state.lastFetchError = { filePath, error: (result as any).error };
-        } else {
-          delete state.lastFetchError;
-          const { fileInfo, fileMeta } = result as AddFileResponse;
-          state.files[filePath] = fileInfo;
-          state.filesSettings[filePath] = fileMeta;
-        }
+        delete state.lastFetchError;
+        const { fileInfo, fileMeta } = result as AddFileResponse;
+        state.files[filePath] = fileInfo;
+        state.filesSettings[filePath] = fileMeta;
       });
     });
+
+    return true;
   },
 
   updateFileSettings: (filePath, updates) =>

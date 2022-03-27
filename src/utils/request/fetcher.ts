@@ -1,9 +1,6 @@
 /**
- * Fetch data from a URL.
- *
- * - A success response's body MUST be JSON.
- * - On error, throws either the error response's body or the status text
- *   (as a string, not an Error).
+ * Fetch data from a URL. A success response's body MUST be JSON.
+ * On error, throws an error containing the response's body or the status text.
  *
  * @param input URL to fetch
  * @param options fetch options
@@ -30,8 +27,8 @@ export async function fetcher<Data>(url: string, options?: RequestInit) {
     if (json) {
       return json;
     }
-    throw 'Response was not in JSON format';
+    throw new Error('Response was not in JSON format');
   }
 
-  throw text || res.statusText;
+  throw new Error(text || res.statusText);
 }
