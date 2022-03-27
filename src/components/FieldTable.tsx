@@ -1,10 +1,10 @@
 import React from 'react';
 import { IconButton } from '@fluentui/react/lib/Button';
 import { SpinButton, ISpinButtonProps, ISpinButtonStyles } from '@fluentui/react/lib/SpinButton';
-import { TextField } from '@fluentui/react/lib/TextField';
 import { mergeStyles } from '@fluentui/react/lib/Styling';
 import { State, useStore } from '../utils/store/useStore';
 import { Series } from '../utils/types';
+import TextFieldLazy from './TextFieldLazy';
 
 type FieldTableRowProps = {
   series: Series;
@@ -50,7 +50,7 @@ const FieldTableRow: React.FunctionComponent<FieldTableRowProps> = (props) => {
     <tr>
       <th style={{ color }}>{name}</th>
       <td>
-        <TextField title="Label" value={label} onChange={onLabelChange} />
+        <TextFieldLazy title="Label" value={label} onChange={onLabelChange} />
       </td>
       <td>
         <SpinButton
