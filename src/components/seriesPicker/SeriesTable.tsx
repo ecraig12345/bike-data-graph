@@ -11,8 +11,13 @@ type SeriesTableRowProps = {
   series: Series;
 };
 
+/** ending headers are down, up, remove */
+const headers = ['Field', 'From file', 'Label', 'Smooth', '', '', ''] as const;
+
 const className = mergeStyles({
-  'th:first-child': { width: 100, textAlign: 'right' },
+  'th:first-child': { width: '20%' },
+  'td:nth-child(2)': { width: '25%', maxWidth: '25%', fontSize: '0.85em' },
+  'td:nth-last-child(2), td:nth-last-child(3)': { paddingRight: 0 },
 });
 
 const spinButtonStyles: Partial<ISpinButtonStyles> = {
@@ -49,6 +54,7 @@ const SeriesTableRow: React.FunctionComponent<SeriesTableRowProps> = (props) => 
   return (
     <tr>
       <th style={{ color }}>{name}</th>
+      <td>{fileDisplayName}</td>
       <td>
         <TextFieldLazy title="Label" value={label} onChange={onLabelChange} />
       </td>
@@ -71,7 +77,6 @@ const SeriesTableRow: React.FunctionComponent<SeriesTableRowProps> = (props) => 
       <td>
         <IconButton onClick={remove} title="Remove" iconProps={removeIconProps} />
       </td>
-      <td>{fileDisplayName}</td>
     </tr>
   );
 };
@@ -85,8 +90,8 @@ const SeriesTable: React.FunctionComponent = () => {
     <Table className={className}>
       <thead>
         <tr>
-          {['Field', 'Label', 'Smooth', 'Down', 'Up', 'Remove', 'From'].map((h) => (
-            <th key={h}>{h}</th>
+          {headers.map((h, i) => (
+            <th key={h || i}>{h}</th>
           ))}
         </tr>
       </thead>

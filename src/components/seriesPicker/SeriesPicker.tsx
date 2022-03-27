@@ -1,21 +1,38 @@
 import React from 'react';
+import { PrimaryButton } from '@fluentui/react/lib/Button';
 import {
   Dropdown,
   IDropdownOption,
   IDropdownProps,
   IDropdownStyles,
 } from '@fluentui/react/lib/Dropdown';
+import { mergeStyleSets } from '@fluentui/react/lib/Styling';
 import shallow from 'zustand/shallow';
 import SeriesTable from './SeriesTable';
 import { State, useStore } from '../../store/useStore';
-import { FileInfo } from '../../types';
 
 type DropdownOnChange = Required<IDropdownProps>['onChange'];
 
 const dropdownStyles: Partial<IDropdownStyles> = {
-  dropdown: { width: 300 },
-  root: { display: 'inline-block', marginRight: 30 },
+  root: { display: 'inline-flex', gap: 10, width: 250, '.ms-layer': { display: 'none' } },
+  dropdown: { flexGrow: '1', overflow: 'hidden' },
+  dropdownOptionText: { overflow: 'visible', whiteSpace: 'normal' },
+  dropdownItem: { height: 'auto' },
 };
+
+const styles = mergeStyleSets({
+  root: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '1em',
+  },
+  addSeriesText: { fontWeight: 'bold', marginBottom: '0.4em' },
+  addSeries: {
+    display: 'flex',
+    flexDirection: 'row',
+    gap: 20,
+  },
+});
 
 const selector = (s: State) => ({
   files: s.files,
@@ -25,70 +42,70 @@ const selector = (s: State) => ({
 
 const SeriesPicker: React.FunctionComponent = () => {
   const { files, filesSettings, series } = useStore(selector, shallow);
+  const [selectedFilePath, setSelectedFilePath] = React.useState<string>();
+  const [selectedField, setSelectedField] = React.useState<string>();
 
-  // TODO support multiple files
-  const { allFields, filePath } = (Object.values(files) as FileInfo[] | undefined[])[0] || {};
-
-  const dropdownOptions = React.useMemo(
-    () => allFields?.map((f): IDropdownOption => ({ key: f, text: f })),
-    [allFields]
+  const filesOptions = React.useMemo(
+    () =>
+      Object.entries(filesSettings)
+        .filter(([, fileSettings]) => !!fileSettings.timeField)
+        .map(
+          ([filePath, fileSettings]): IDropdownOption<string> => ({
+            key: filePath,
+            text: fileSettings.displayName,
+          })
+        ),
+    [filesSettings]
   );
-  const selectedKeys = React.useMemo(
-    () => series.filter((s) => s.filePath === filePath).map((s) => s.yField),
-    [series, filePath]
-  );
+  const onFilesDropdownChange = React.useCallback<DropdownOnChange>((ev, option) => {
+    setSelectedFilePath(option!.key as string);
+    setSelectedField(undefined);
+  }, []);
 
-  const onTimeDropdownChange = React.useCallback<DropdownOnChange>(
-    (_ev, option) => {
-      useStore.getState().updateFileSettings(filePath!, { timeField: option!.key as string });
-    },
-    [filePath]
-  );
+  const fieldOptions = React.useMemo(() => {
+    if (!selectedFilePath) return [];
 
-  const findSeries = React.useCallback(
-    (option: IDropdownOption | undefined) => {
-      const fieldName = option!.key as string;
-      return series.find((s) => s.yField === fieldName && s.filePath === filePath);
-    },
-    [series, filePath]
-  );
+    const usedFields = series.filter((s) => s.filePath === selectedFilePath).map((s) => s.yField);
+    usedFields.push(filesSettings[selectedFilePath].timeField!);
 
-  const onFieldsDropdownChange = React.useCallback<DropdownOnChange>(
-    (_ev, option) => {
-      const ser = findSeries(option);
-      if (option!.selected) {
-        useStore.getState().addSeries({ filePath: filePath!, yField: option!.key as string });
-      } else if (ser) {
-        useStore.getState().removeSeries(ser);
-      }
-    },
-    [filePath, findSeries]
-  );
+    return files[selectedFilePath].allFields
+      .filter((f) => !usedFields.includes(f))
+      .map((f): IDropdownOption => ({ key: f, text: f }));
+  }, [selectedFilePath, files, filesSettings, series]);
 
-  if (!dropdownOptions || !filePath) {
-    return null;
-  }
+  const onFieldDropdownChange = React.useCallback<DropdownOnChange>((ev, option) => {
+    setSelectedField(option!.key as string);
+  }, []);
+
+  const onAddClick = React.useCallback(() => {
+    useStore.getState().addSeries({ filePath: selectedFilePath!, yField: selectedField! });
+  }, [selectedField, selectedFilePath]);
 
   return (
-    <div>
-      <Dropdown
-        label="Y-axis fields"
-        multiSelect
-        options={dropdownOptions}
-        onChange={onFieldsDropdownChange}
-        selectedKeys={selectedKeys}
-        styles={dropdownStyles}
-      />
-      <Dropdown
-        label="Time scale field (MUST contain string or milliseconds of Date)"
-        options={dropdownOptions}
-        onChange={onTimeDropdownChange}
-        selectedKey={filesSettings[filePath].timeField}
-        styles={dropdownStyles}
-      />
-      <br />
-      <br />
+    <div className={styles.root}>
+      <h2>Select series</h2>
       <SeriesTable />
+      <div>
+        <div className={styles.addSeriesText}>Add a new series</div>
+        <div className={styles.addSeries}>
+          <Dropdown
+            label="File"
+            options={filesOptions}
+            onChange={onFilesDropdownChange}
+            styles={dropdownStyles}
+          />
+          <Dropdown
+            label="Field"
+            disabled={!fieldOptions.length}
+            options={fieldOptions}
+            onChange={onFieldDropdownChange}
+            styles={dropdownStyles}
+          />
+          <PrimaryButton disabled={!selectedField} onClick={onAddClick}>
+            Add
+          </PrimaryButton>
+        </div>
+      </div>
     </div>
   );
 };

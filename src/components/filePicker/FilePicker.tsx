@@ -37,7 +37,7 @@ const FilePicker: React.FunctionComponent = () => {
 
   return (
     <div className={styles.flex}>
-      <h2>Files</h2>
+      <h2>Select files</h2>
       <FilesTable />
       <Details summary="Add files" defaultIsOpen className={styles.addFiles}>
         {lastLoadedFile && !files[lastLoadedFile] ? (

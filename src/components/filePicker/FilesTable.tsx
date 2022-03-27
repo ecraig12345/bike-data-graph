@@ -14,9 +14,12 @@ import Table from '../basic/Table';
 
 type FilesTableRowProps = FileInfo & FileSettings;
 
+/** last header is remove */
+const headers = ['Name', 'Display name', 'Time field', 'Time offset', ''] as const;
+
 const className = mergeStyles({
   // original name
-  'td:first-child': { width: '30%', fontSize: '0.9em' },
+  'td:first-child': { maxWidth: '35%', fontSize: '0.95em' },
   // display name
   'td:nth-child(2)': { width: '30%' },
   // time field
@@ -90,7 +93,7 @@ const FilesTable: React.FunctionComponent = () => {
     <Table className={className}>
       <thead>
         <tr>
-          {['Name', 'Display name', 'Time field', 'Time offset', ''].map((h, i) => (
+          {headers.map((h, i) => (
             <th key={h || i}>{h}</th>
           ))}
         </tr>

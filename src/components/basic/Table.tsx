@@ -23,7 +23,6 @@ const rootClass = mergeStyles({
     verticalAlign: 'middle',
   },
   'td:not(:last-child), th:not(:last-child)': { paddingRight: '12px' },
-  'td:last-child': { textAlign: 'right ' },
 });
 
 const Table: React.FunctionComponent<React.TableHTMLAttributes<HTMLTableElement>> = (props) => {

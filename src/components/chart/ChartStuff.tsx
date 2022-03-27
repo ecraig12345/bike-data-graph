@@ -128,7 +128,7 @@ function useSeriesData() {
       const data = files[ser.filePath].rawData.map((r, i) => {
         const d = {
           x: timeSer.values[i],
-          y: Number(r[ser.yField]),
+          y: Number(r[ser.yField]) || 0,
         };
         yMax = Math.max(yMax, d.y);
         return d;
