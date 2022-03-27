@@ -5,6 +5,7 @@ import { mergeStyles } from '@fluentui/react/lib/Styling';
 import { State, useStore } from '../../store/useStore';
 import { Series } from '../../types';
 import TextFieldLazy from '../basic/TextFieldLazy';
+import Table from '../basic/Table';
 
 type SeriesTableRowProps = {
   series: Series;
@@ -81,7 +82,7 @@ const SeriesTable: React.FunctionComponent = () => {
   const allSeries = useStore(seriesSelector);
 
   return (
-    <table className={className}>
+    <Table className={className}>
       <thead>
         <tr>
           {['Field', 'Label', 'Smooth', 'Down', 'Up', 'Remove', 'From'].map((h) => (
@@ -94,7 +95,7 @@ const SeriesTable: React.FunctionComponent = () => {
           <SeriesTableRow key={s.filePath + s.yField} series={s} />
         ))}
       </tbody>
-    </table>
+    </Table>
   );
 };
 

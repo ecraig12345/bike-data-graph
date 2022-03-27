@@ -10,6 +10,7 @@ import { mergeStyles } from '@fluentui/react/lib/Styling';
 import { State, useStore } from '../../store/useStore';
 import { FileInfo, FileSettings } from '../../types';
 import TextFieldLazy from '../basic/TextFieldLazy';
+import Table from '../basic/Table';
 
 type FilesTableRowProps = FileInfo & FileSettings;
 
@@ -86,23 +87,20 @@ const FilesTable: React.FunctionComponent = () => {
   }
 
   return (
-    <>
-      <h2>Files</h2>
-      <table className={className}>
-        <thead>
-          <tr>
-            {['Name', 'Display name', 'Time field', 'Time offset', ''].map((h, i) => (
-              <th key={h || i}>{h}</th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {Object.keys(files).map((filePath) => (
-            <FilesTableRow key={filePath} {...files[filePath]} {...filesSettings[filePath]} />
+    <Table className={className}>
+      <thead>
+        <tr>
+          {['Name', 'Display name', 'Time field', 'Time offset', ''].map((h, i) => (
+            <th key={h || i}>{h}</th>
           ))}
-        </tbody>
-      </table>
-    </>
+        </tr>
+      </thead>
+      <tbody>
+        {Object.keys(files).map((filePath) => (
+          <FilesTableRow key={filePath} {...files[filePath]} {...filesSettings[filePath]} />
+        ))}
+      </tbody>
+    </Table>
   );
 };
 

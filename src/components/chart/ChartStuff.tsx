@@ -178,9 +178,6 @@ function getChartOptions(seriesData: SeriesData[]) {
       //   samples: 250,
       //   threshold: 250,
       // },
-      legend: {
-        position: 'bottom',
-      },
       zoom: {
         limits: {
           // can't zoom out beyond original data set or in beyond 3 minutes

@@ -31,7 +31,9 @@ const Details: React.FunctionComponent<DetailsProps> = (props) => {
 
   return (
     <details className={css(className, rootClass)} open={isOpen} {...rest}>
-      <summary onClick={onClick}>{summary}</summary>
+      <summary onClick={onClick}>
+        <strong>{summary}</strong>
+      </summary>
       {children}
     </details>
   );

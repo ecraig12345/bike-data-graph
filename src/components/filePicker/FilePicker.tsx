@@ -1,6 +1,6 @@
 import React from 'react';
 import { Spinner, SpinnerSize } from '@fluentui/react/lib/Spinner';
-import { mergeStyles } from '@fluentui/react/lib/Styling';
+import { mergeStyleSets } from '@fluentui/react/lib/Styling';
 import { State, useStore } from '../../store/useStore';
 import Details from '../basic/Details';
 import Error from '../basic/Error';
@@ -8,15 +8,21 @@ import DropZone from './DropZone';
 import FilesTable from './FilesTable';
 import LocalFileList from './LocalFileList';
 
-const addFilesClass = mergeStyles({
-  paddingLeft: '1em',
-  '> summary': { marginBottom: '1em' },
+const styles = mergeStyleSets({
+  flex: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '1em',
+  },
+  addFiles: {
+    padding: '0 1em',
+  },
 });
 
 const lastFetchErrorSelector = (s: State) => s.lastFetchError;
 const filesSelector = (s: State) => s.files;
 
-const FileList: React.FunctionComponent = () => {
+const FilePicker: React.FunctionComponent = () => {
   const [lastLoadedFile, setLastLoadedFile] = React.useState<string>('');
   const lastFetchError = useStore(lastFetchErrorSelector);
   const files = useStore(filesSelector);
@@ -27,26 +33,24 @@ const FileList: React.FunctionComponent = () => {
   }, []);
 
   return (
-    <>
+    <div className={styles.flex}>
+      <h2>Files</h2>
       <FilesTable />
-      <br />
-      <Details summary="Add files" defaultIsOpen className={addFilesClass}>
+      <Details summary="Add files" defaultIsOpen className={styles.addFiles}>
         {lastLoadedFile && !files[lastLoadedFile] ? (
           <Spinner label={`Loading ${lastLoadedFile}...`} size={SpinnerSize.large} />
         ) : (
-          <>
+          <div className={styles.flex}>
             <DropZone onFileSelected={onFileSelected} />
-            <br />
             <LocalFileList onFileSelected={onFileSelected} />
-            <br />
             {lastFetchError && (
               <Error>{`Error loading "${lastFetchError.filePath}": ${lastFetchError.error}`}</Error>
             )}
-          </>
+          </div>
         )}
       </Details>
-    </>
+    </div>
   );
 };
 
-export default FileList;
+export default FilePicker;

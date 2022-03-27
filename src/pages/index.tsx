@@ -19,12 +19,15 @@ const styles = mergeStyleSets({
     flex: '1',
     display: 'flex',
     flexDirection: 'column',
-    gap: '1em',
+    gap: '2em',
     width: '100%',
   },
   tables: {
     width: 'min(100%, 800px)',
     margin: '0 auto 1em',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '1.5em',
   },
 });
 
@@ -46,7 +49,6 @@ export default function Home() {
         <h1>Bike data comparison</h1>
         <div className={styles.tables}>
           <FilePicker />
-          <br />
           {hasFiles && <SeriesPicker />}
         </div>
         {hasFiles && <ChartStuff />}
