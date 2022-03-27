@@ -1,6 +1,7 @@
 import { nextColor } from '../utils/chart/randomColor';
 import { Series, SeriesId, SeriesMutable } from '../types';
 import { StoreSlice } from './types';
+import applyUpdates from './applyUpdates';
 
 // https://github.com/pmndrs/zustand/wiki/Splitting-the-store-into-separate-slices
 
@@ -59,12 +60,7 @@ export const createSeriesSlice: StoreSlice<SeriesSlice> = (set) => ({
     set((state) => {
       const idx = findSeriesIndex(state, original);
       if (idx !== -1) {
-        const ser = state.series[idx];
-        for (const [k, v] of Object.entries(updates)) {
-          if (v !== undefined) {
-            (ser as any)[k] = v;
-          }
-        }
+        applyUpdates(state.series[idx], updates);
       }
     }),
 });

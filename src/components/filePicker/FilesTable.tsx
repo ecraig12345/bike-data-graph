@@ -26,14 +26,6 @@ const className = mergeStyles({
   'td:nth-child(2)': { width: '30%' },
   // time field
   'td:nth-child(3)': { width: '20%' },
-  'input[type="number"]::-webkit-outer-spin-button,input[type="number"]::-webkit-inner-spin-button':
-    {
-      '-webkit-appearance': 'none',
-      margin: 0,
-    },
-  'input[type="number"]': {
-    '-moz-appearance': 'textfield',
-  },
 });
 
 const dropdownStyles: Partial<IDropdownStyles> = {

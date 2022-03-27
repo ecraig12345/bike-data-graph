@@ -54,6 +54,9 @@ const FilePicker: React.FunctionComponent = () => {
       <FilesTable />
       <Details summary="Add files" defaultIsOpen className={styles.addFiles}>
         {isLoading && <Spinner label={`Loading ${lastLoadedFile}...`} size={SpinnerSize.large} />}
+        {/* While uploading, hide the selection controls, but don't unmount them because if
+          multiple files are dropped in the DropZone, it needs to handle those in series (and
+          it can't do that if it's been unmounted) */}
         <div className={css(styles.flex, isLoading && styles.hidden)}>
           <DropZone onFileSelected={onFileSelected} />
           {isLocal && <LocalFileList onFileSelected={onFileSelected} />}

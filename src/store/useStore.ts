@@ -1,9 +1,10 @@
 import { unstable_batchedUpdates } from 'react-dom';
 import create, { StateCreator } from 'zustand';
 import { addFile, AddFileResponse } from '../utils/request/addFile';
-import { FileInfo, FileSettings, FilePath } from '../types';
+import { FileInfo, FileSettings, FilePath, ChartSettings } from '../types';
 import immerMiddleware from './immerMiddleware';
 import { createSeriesSlice, SeriesSlice } from './seriesSlice';
+import applyUpdates from './applyUpdates';
 
 export type State = SeriesSlice & {
   /** map from file path to file data */
@@ -12,6 +13,7 @@ export type State = SeriesSlice & {
   filesSettings: Record<FilePath, FileSettings>;
   /** most recent error running `addFile` (cleared on success) */
   lastFetchError?: { filePath: string; error: string };
+  chartSettings: ChartSettings;
 
   /** Fetch/convert a file. Returns true if it succeeded. */
   addFile: (file: string | File) => Promise<boolean>;
@@ -19,6 +21,8 @@ export type State = SeriesSlice & {
   updateFileSettings: (filePath: string, updates: Partial<FileSettings>) => void;
   /** Remove file and related series */
   removeFile: (filePath: string) => void;
+
+  updateChartSettings: (updates: Partial<ChartSettings>) => void;
 };
 
 const config: StateCreator<State> = (set, get) => ({
@@ -26,6 +30,7 @@ const config: StateCreator<State> = (set, get) => ({
 
   files: {},
   filesSettings: {},
+  chartSettings: {},
 
   // NOTE: directly setting values on state because `set` is wrapped with immer `produce`
 
@@ -59,18 +64,18 @@ const config: StateCreator<State> = (set, get) => ({
 
   updateFileSettings: (filePath, updates) =>
     set((state) => {
-      const settings = state.filesSettings[filePath];
-      for (const [k, v] of Object.entries(updates)) {
-        if (v !== undefined) {
-          (settings as any)[k] = v;
-        }
-      }
+      applyUpdates(state.filesSettings[filePath], updates);
     }),
 
   removeFile: (filePath) =>
     set((state) => {
       delete state.files[filePath];
       state.series = state.series.filter((s) => s.filePath !== filePath);
+    }),
+
+  updateChartSettings: (updates) =>
+    set((state) => {
+      applyUpdates(state.chartSettings, updates, true /*allowUndefined*/);
     }),
 });
 

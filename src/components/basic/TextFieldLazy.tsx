@@ -1,9 +1,22 @@
 import React from 'react';
+import { mergeStyles } from '@fluentui/react/lib/Styling';
 import { TextField, ITextFieldProps } from '@fluentui/react/lib/TextField';
+import { css } from '@fluentui/react/lib/Utilities';
 
 export type TextFieldLazyProps = Omit<ITextFieldProps, 'defaultValue' | 'value'> & {
   value: string;
 };
+
+const rootClass = mergeStyles({
+  'input[type="number"]::-webkit-outer-spin-button,input[type="number"]::-webkit-inner-spin-button':
+    {
+      '-webkit-appearance': 'none',
+      margin: 0,
+    },
+  'input[type="number"]': {
+    '-moz-appearance': 'textfield',
+  },
+});
 
 /**
  * TextField wrapper which is controlled (takes `value` prop only) but is "lazy" about notifying
@@ -14,6 +27,7 @@ export type TextFieldLazyProps = Omit<ITextFieldProps, 'defaultValue' | 'value'>
  */
 const TextFieldLazy: React.FunctionComponent<TextFieldLazyProps> = (props) => {
   const {
+    className,
     onBlur: propsOnBlur,
     onFocus: propsOnFocus,
     onChange: propsOnChange,
@@ -51,7 +65,14 @@ const TextFieldLazy: React.FunctionComponent<TextFieldLazyProps> = (props) => {
   }, []);
 
   return (
-    <TextField {...rest} value={value} onBlur={onBlur} onChange={onChange} onFocus={onFocus} />
+    <TextField
+      {...rest}
+      className={css(rootClass, className)}
+      value={value}
+      onBlur={onBlur}
+      onChange={onChange}
+      onFocus={onFocus}
+    />
   );
 };
 

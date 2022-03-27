@@ -75,3 +75,7 @@ export type ConvertFileBody = {
   csvData: string;
   format?: 'fit' | 'velocomp';
 };
+
+export type ChartSettings = {
+  yBound?: number;
+};

@@ -41,7 +41,7 @@ const selector = (s: State) => ({
 
 const SeriesPicker: React.FunctionComponent = () => {
   const { files, filesSettings, series } = useStore(selector, shallow);
-  const [selectedFilePath, setSelectedFilePath] = React.useState<string>();
+  const [selectedFilePath, setSelectedFilePath] = React.useState<string>('');
   const fieldsDropdownRef = React.useRef<IDropdown>(null);
 
   const filesOptions = React.useMemo(
@@ -88,10 +88,18 @@ const SeriesPicker: React.FunctionComponent = () => {
   }, [selectedFilePath]);
 
   React.useEffect(() => {
-    if (selectedFilePath && !filesSettings[selectedFilePath]) {
-      setSelectedFilePath(undefined);
+    if (filesOptions.length) {
+      if (!selectedFilePath || !filesSettings[selectedFilePath]) {
+        // select the first option if:
+        // - options are newly available
+        // - the previously-selected file was removed
+        setSelectedFilePath(filesOptions[0].key as string);
+      }
+    } else if (selectedFilePath) {
+      // no options => clear selection
+      setSelectedFilePath('');
     }
-    // clear state if the file is deleted
+    // update state if needed when files are changed
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filesOptions]);
 
@@ -105,6 +113,7 @@ const SeriesPicker: React.FunctionComponent = () => {
           <Dropdown
             label="File"
             options={filesOptions}
+            selectedKey={selectedFilePath}
             onChange={onFilesDropdownChange}
             styles={dropdownStyles}
           />

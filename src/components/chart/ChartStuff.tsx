@@ -2,7 +2,7 @@ import React from 'react';
 import dynamic from 'next/dynamic';
 import type { ChartDataset, ChartOptions, ScatterDataPoint } from 'chart.js';
 import { State, useStore } from '../../store/useStore';
-import { FilePath, FileSettings, Series } from '../../types';
+import { ChartSettings, FilePath, FileSettings, Series } from '../../types';
 import type { LineChartProps } from './LineChart';
 import { smooth } from '../../utils/chart/smooth';
 
@@ -16,6 +16,7 @@ const yTickStep = 50;
 
 const filesSettingsSelector = (s: State) => s.filesSettings;
 const seriesSelector = (s: State) => s.series;
+const chartSettingsSelector = (s: State) => s.chartSettings;
 
 /** Time series data: field name and values from a particular file */
 type TimeSeriesData = { fieldName: string; offset?: number; values: number[] };
@@ -34,6 +35,8 @@ type SeriesData = {
   data: ScatterDataPoint[];
   /** max y value in this series */
   yMax: number;
+  mean: number;
+  stddev: number;
 };
 
 function getTimeSeriesKeyParts(filePath: string, fileSettings: FileSettings) {
@@ -126,6 +129,8 @@ function useSeriesData() {
     const oldData = seriesData.current;
 
     const newData = readySeries.map((ser): SeriesData => {
+      // if the array of series has changed but the options for a particular series haven't,
+      // use the previously-calculated data
       const timeSer = timeSeries.current[ser.filePath];
       const seriesKey = getCompleteSeriesKey(ser, filesSettings);
       const oldSer = oldData.find((s) => s.key === seriesKey);
@@ -134,19 +139,29 @@ function useSeriesData() {
       }
 
       let yMax = 0;
+      // calculate sum for mean/stddev
+      // (shouldn't overflow even for long rides/high power: 500*60*60*24 = 43200000)
+      let sum = 0;
       const data = files[ser.filePath].rawData.map((r, i) => {
         const d = {
           x: timeSer.values[i],
           y: Number(r[ser.yField]) || 0,
         };
         yMax = Math.max(yMax, d.y);
+        sum += d.y;
         return d;
       });
       if (ser.smooth) {
         yMax = smooth(data, ser.smooth, ser.smooth);
       }
+      const mean = sum / data.length;
+      const stddev = Math.sqrt(
+        data.map((d) => Math.pow(d.y - mean, 2)).reduce((a, b) => a + b) / data.length
+      );
+      // right now these are just logged for information
+      console.log(ser.yField, 'mean', mean, 'stddev', stddev, mean + stddev * 4);
 
-      return { key: seriesKey, seriesKey: getSeriesKey(ser), yMax, data };
+      return { key: seriesKey, seriesKey: getSeriesKey(ser), yMax, mean, stddev, data };
     });
 
     seriesData.current = newData;
@@ -156,10 +171,10 @@ function useSeriesData() {
   return [seriesData, seriesKey] as const;
 }
 
-function getChartOptions(seriesData: SeriesData[]) {
+function getChartOptions(seriesData: SeriesData[], chartSettings: ChartSettings) {
   // include 0 in case there are no series defined currently
   const yMax = Math.max(0, ...seriesData.map((s) => s.yMax));
-  const yBound = yMax + (yTickStep - (yMax % yTickStep));
+  const defaultYBound = yMax + (yTickStep - (yMax % yTickStep));
 
   const options: ChartOptions<'line'> = {
     animation: false,
@@ -170,13 +185,13 @@ function getChartOptions(seriesData: SeriesData[]) {
       x: {
         type: 'time',
         time: { minUnit: 'minute' },
-        // keep rotation consistent while zooming
+        // keep rotation consistent while zooming (also a perf optimization to not calculate this)
         ticks: { maxRotation: 45, minRotation: 45 },
       },
       y: {
         type: 'linear',
         // Specify max so the axis doesn't change scale when zooming
-        max: yBound,
+        max: chartSettings.yBound ?? defaultYBound,
         ticks: { stepSize: yTickStep },
       },
     },
@@ -218,13 +233,14 @@ const ChartStuff: React.FunctionComponent = () => {
   // The series objects are not cached with the data because they have additional properties
   // (like color) that may update separately, where updates are less expensive
   const series = useStore(seriesSelector);
+  const chartSettings = useStore(chartSettingsSelector);
 
   // The data is stored in a ref and updated in an effect, so also run final calculations in an
   // effect (not memo) to ensure the latest data is used.
   React.useEffect(() => {
     setProps({
       datasetIdKey,
-      options: getChartOptions(seriesData.current),
+      options: getChartOptions(seriesData.current, chartSettings),
       data: {
         datasets: seriesData.current.map((serData): ChartDataset<'line', ScatterDataPoint[]> => {
           // find the matching series object (it should exist)
@@ -232,6 +248,7 @@ const ChartStuff: React.FunctionComponent = () => {
 
           return {
             label: ser.label,
+            // ensure there's a unique key to identify each series (label may not be unique)
             [datasetIdKey as any]: serData.seriesKey,
             backgroundColor: ser.color,
             borderColor: ser.color,
@@ -244,14 +261,9 @@ const ChartStuff: React.FunctionComponent = () => {
       },
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps -- only recalculate on relevant updates
-  }, [seriesKey, series]);
+  }, [seriesKey, series, chartSettings]);
 
-  return (
-    <>
-      <div>Pinch, scroll, or click and drag to zoom. Shift+drag to pan.</div>
-      {props && <LineChart {...props} />}
-    </>
-  );
+  return props ? <LineChart {...props} /> : null;
 };
 
 export default ChartStuff;
