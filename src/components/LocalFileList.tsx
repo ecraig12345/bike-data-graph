@@ -7,7 +7,7 @@ import { FilesData } from '../utils/types';
 import Details from './Details';
 import Error from './Error';
 
-export type FileListProps = {
+export type LocalFileListProps = {
   className?: string;
   onFileSelected: (filePath: string) => void;
 };
@@ -24,7 +24,7 @@ const rootClass = mergeStyles({
   summary: { cursor: 'pointer' },
 });
 
-async function listFolders(onFileSelected: FileListProps['onFileSelected']) {
+async function listFolders(onFileSelected: LocalFileListProps['onFileSelected']) {
   let data: FilesData;
   try {
     data = await fetcher('api/files');
@@ -45,7 +45,7 @@ async function listFolders(onFileSelected: FileListProps['onFileSelected']) {
   return { folders };
 }
 
-const FileList: React.FunctionComponent<FileListProps> = (props) => {
+const LocalFileList: React.FunctionComponent<LocalFileListProps> = (props) => {
   const { onFileSelected } = props;
   const [hasOpened, setHasOpened] = React.useState(false);
   const [{ folders, error }, setListFoldersResult] = React.useState<ListFoldersResult>({});
@@ -66,7 +66,7 @@ const FileList: React.FunctionComponent<FileListProps> = (props) => {
 
   return (
     <Details
-      summary="List data files"
+      summary="List local data files"
       defaultIsOpen={false}
       onOpenChange={onOpenChange}
       className={rootClass}
@@ -93,4 +93,4 @@ const FileList: React.FunctionComponent<FileListProps> = (props) => {
   );
 };
 
-export default FileList;
+export default LocalFileList;
