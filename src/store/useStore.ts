@@ -1,5 +1,6 @@
 import { unstable_batchedUpdates } from 'react-dom';
 import create, { StateCreator } from 'zustand';
+// import { devtools } from 'zustand/middleware';
 import { addFile, AddFileResponse } from '../utils/request/addFile';
 import { FileInfo, FileSettings, FilePath, ChartSettings } from '../types';
 import immerMiddleware from './immerMiddleware';
@@ -70,6 +71,7 @@ const config: StateCreator<State> = (set, get) => ({
   removeFile: (filePath) =>
     set((state) => {
       delete state.files[filePath];
+      delete state.filesSettings[filePath];
       state.series = state.series.filter((s) => s.filePath !== filePath);
     }),
 
@@ -79,4 +81,5 @@ const config: StateCreator<State> = (set, get) => ({
     }),
 });
 
+// export const useStore = create(devtools(immerMiddleware(config)));
 export const useStore = create(immerMiddleware(config));
