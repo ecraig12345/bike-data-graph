@@ -56,7 +56,10 @@ export function cloneData<
  * @param event - Mouse click event
  * @returns Dataset
  */
-export function getDatasetAtEvent(chart: Chart, event: React.MouseEvent<HTMLCanvasElement>) {
+export function getDatasetAtEvent(
+  chart: Chart<any, any, any>,
+  event: React.MouseEvent<HTMLCanvasElement>
+) {
   return chart.getElementsAtEventForMode(event.nativeEvent, 'dataset', { intersect: true }, false);
 }
 
@@ -66,7 +69,10 @@ export function getDatasetAtEvent(chart: Chart, event: React.MouseEvent<HTMLCanv
  * @param event - Mouse click event
  * @returns Dataset
  */
-export function getElementAtEvent(chart: Chart, event: React.MouseEvent<HTMLCanvasElement>) {
+export function getElementAtEvent(
+  chart: Chart<any, any, any>,
+  event: React.MouseEvent<HTMLCanvasElement>
+) {
   return chart.getElementsAtEventForMode(event.nativeEvent, 'nearest', { intersect: true }, false);
 }
 
@@ -76,6 +82,22 @@ export function getElementAtEvent(chart: Chart, event: React.MouseEvent<HTMLCanv
  * @param event - Mouse click event
  * @returns Dataset
  */
-export function getElementsAtEvent(chart: Chart, event: React.MouseEvent<HTMLCanvasElement>) {
+export function getElementsAtEvent(
+  chart: Chart<any, any, any>,
+  event: React.MouseEvent<HTMLCanvasElement>
+) {
   return chart.getElementsAtEventForMode(event.nativeEvent, 'index', { intersect: true }, false);
+}
+
+/**
+ * Get all points at the x axis position of the event
+ * @param chart - Chart.js instance
+ * @param event - Mouse click event
+ * @returns Points
+ */
+export function getElementsAtXAxis(
+  chart: Chart<any, any, any>,
+  event: React.MouseEvent<HTMLCanvasElement>
+) {
+  return chart.getElementsAtEventForMode(event.nativeEvent, 'index', { intersect: false }, false);
 }

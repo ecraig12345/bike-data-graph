@@ -53,7 +53,7 @@ const ChartControls: React.FunctionComponent = () => {
       </div>
       <div>
         <strong>Chart interaction:</strong> Pinch, scroll, or click and drag to zoom. Shift+drag to
-        pan.
+        pan. Right click for more options.
       </div>
     </div>
   );

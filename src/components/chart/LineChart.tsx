@@ -1,6 +1,7 @@
 import React from 'react';
-import { cloneData, setDatasets } from '../../utils/chart/chartUtils';
-
+import { ContextualMenu, IContextualMenuItem } from '@fluentui/react/lib/ContextualMenu';
+import { useMergedRefs } from '@fluentui/react-hooks';
+import { cloneData, getElementsAtXAxis, setDatasets } from '../../utils/chart/chartUtils';
 import {
   ChartData,
   ChartOptions,
@@ -17,6 +18,7 @@ import {
   Tooltip,
   Title,
   SubTitle,
+  InteractionItem,
 } from 'chart.js';
 
 // https://www.chartjs.org/chartjs-plugin-zoom/guide/options.html
@@ -40,14 +42,27 @@ export type LineChartProps<
    */
   datasetIdKey?: string;
   fallbackContent?: React.ReactNode;
+  chartRef?: React.MutableRefObject<Chart<'line', TData, TLabel> | null>;
+  getContextualMenuItems?: (points: InteractionItem[]) => IContextualMenuItem[] | undefined;
 };
 
 function LineChart<TData = DefaultDataPoint<'line'>, TLabel = unknown>(
   props: LineChartProps<TData, TLabel>
 ) {
-  const { datasetIdKey, data, options, plugins, fallbackContent, ...rest } = props;
+  const {
+    datasetIdKey,
+    data,
+    options,
+    plugins,
+    fallbackContent,
+    getContextualMenuItems,
+    onContextMenu: propsOnContextMenu,
+    chartRef: propsChartRef,
+    ...rest
+  } = props;
   const canvasRef = React.useRef<HTMLCanvasElement>(null);
-  const chartRef = React.useRef<Chart<'line', TData, TLabel> | null>(null);
+  // in the useMergedRefs implementation this is mutable, the type is just wrong
+  const chartRef = (useMergedRefs(React.useRef(null), propsChartRef) as typeof propsChartRef)!;
 
   React.useEffect(() => {
     Chart.register(
@@ -77,32 +92,64 @@ function LineChart<TData = DefaultDataPoint<'line'>, TLabel = unknown>(
     // eslint-disable-next-line react-hooks/exhaustive-deps -- only run once
   }, []);
 
+  // Updating chart data on props change
   React.useEffect(() => {
     if (chartRef.current && options) {
       chartRef.current.options = { ...options };
     }
-  }, [options]);
+  }, [chartRef, options]);
 
   React.useEffect(() => {
     if (chartRef.current) {
       chartRef.current.config.data.labels = data.labels;
     }
-  }, [data.labels]);
+  }, [chartRef, data.labels]);
 
   React.useEffect(() => {
     if (chartRef.current && data.datasets) {
       setDatasets(chartRef.current.config.data, data.datasets, datasetIdKey);
     }
-  }, [data.datasets, datasetIdKey]);
+  }, [chartRef, data.datasets, datasetIdKey]);
 
   React.useEffect(() => {
     chartRef.current?.update();
-  }, [options, data.labels, data.datasets]);
+  }, [options, data.labels, data.datasets, chartRef]);
+
+  // Right click menu
+  const [menuItems, setMenuItems] = React.useState<IContextualMenuItem[]>();
+  const [menuTarget, setMenuTarget] = React.useState<MouseEvent>();
+  const onMenuDismiss = React.useCallback(() => {
+    setMenuItems(undefined);
+    setMenuTarget(undefined);
+  }, []);
+  const onContextMenu = React.useCallback(
+    (ev: React.MouseEvent<HTMLCanvasElement>) => {
+      propsOnContextMenu?.(ev);
+      if (!getContextualMenuItems) {
+        return;
+      }
+      const points = getElementsAtXAxis(chartRef.current!, ev);
+      const items = getContextualMenuItems(points);
+      if (items?.length) {
+        ev.preventDefault();
+        setMenuItems(items);
+        setMenuTarget(ev.nativeEvent);
+      } else {
+        onMenuDismiss();
+      }
+    },
+    [chartRef, getContextualMenuItems, onMenuDismiss, propsOnContextMenu]
+  );
 
   return (
-    <canvas ref={canvasRef} role="img" {...rest}>
-      {fallbackContent}
-    </canvas>
+    <>
+      <canvas role="img" onContextMenu={onContextMenu} {...rest} ref={canvasRef}>
+        {fallbackContent}
+      </canvas>
+      {!!(menuItems && menuTarget) && (
+        <ContextualMenu items={menuItems} target={menuTarget} onDismiss={onMenuDismiss} />
+      )}
+    </>
   );
 }
 
