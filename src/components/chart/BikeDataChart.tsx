@@ -227,7 +227,7 @@ function getChartOptions(seriesData: SeriesData[], chartSettings: ChartSettings)
 
 const datasetIdKey = 'seriesKey';
 
-const ChartStuff: React.FunctionComponent = () => {
+const BikeDataChart: React.FunctionComponent = () => {
   const [props, setProps] = React.useState<LineChartProps>();
   const [seriesData, seriesKey] = useSeriesData();
   // The series objects are not cached with the data because they have additional properties
@@ -266,4 +266,4 @@ const ChartStuff: React.FunctionComponent = () => {
   return props ? <LineChart {...props} /> : null;
 };
 
-export default ChartStuff;
+export default BikeDataChart;

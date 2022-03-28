@@ -2,7 +2,7 @@ import React from 'react';
 import Head from 'next/head';
 import { mergeStyleSets } from '@fluentui/react/lib/Styling';
 import FilePicker from '../components/filePicker/FilePicker';
-import ChartStuff from '../components/chart/ChartStuff';
+import BikeDataChart from '../components/chart/BikeDataChart';
 import { State, useStore } from '../store/useStore';
 import SeriesPicker from '../components/seriesPicker/SeriesPicker';
 import ChartControls from '../components/chart/ChartControls';
@@ -52,7 +52,7 @@ export default function Home() {
           {hasFiles && <SeriesPicker />}
           {hasFiles && <ChartControls />}
         </div>
-        {hasFiles && <ChartStuff />}
+        {hasFiles && <BikeDataChart />}
       </main>
     </div>
   );
