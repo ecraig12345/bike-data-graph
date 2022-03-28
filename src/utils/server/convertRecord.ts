@@ -3,7 +3,6 @@ import { convertField, getFieldDescriptionParts, maybeToNumber } from './convers
 
 export class ConvertState {
   warnedUnits = new Set<string>();
-  warnedFields = new Set<string>();
   startTime = 0;
 }
 
@@ -28,7 +27,7 @@ const ignoredFields = [
 ];
 
 export function convertRecord(record: Record<string, string>, state: ConvertState): ReadFileData {
-  const { warnedFields, warnedUnits } = state;
+  const { warnedUnits } = state;
   const data: Record<string, any> = {};
 
   Object.entries(record).forEach((entry, i) => {
@@ -51,24 +50,14 @@ export function convertRecord(record: Record<string, string>, state: ConvertStat
     }
 
     // add converted units to the final field name (except timestamp, we'll modify that more later)
+    const fieldUnits = convertedUnits || units ? ` (${convertedUnits || units})` : '';
     let newFieldName =
       fieldName === 'timestamp'
         ? 'timestamp'
-        : fieldName.toLowerCase() +
-          (convertedUnits || units ? ` (${convertedUnits || units})` : '');
-
-    if (newFieldName in data) {
-      // already found a value for this field--rename it
-      const modifiedFieldName = newFieldName.replace(fieldName, `${fieldName}_${i}`);
-      if (!warnedFields.has(newFieldName)) {
-        console.error(
-          `found muliple values for field "${newFieldName}" (from original "${field}"); ` +
-            `will save as "${modifiedFieldName}"`
-        );
-        warnedFields.add(newFieldName);
-      }
-      newFieldName = modifiedFieldName;
-    }
+        : fieldName
+            .toLowerCase()
+            .replace(/^position_/, '')
+            .replace(/_/g, ' ') + fieldUnits;
 
     data[newFieldName] = convertedValue ?? maybeToNumber(value);
 

@@ -1,4 +1,4 @@
-timestamp,time,duration,position_lat (deg),position_long (deg),distance (mi),altitude (ft),speed (mph),power (W),heart_rate (bpm),temperature (F),power2 (W),cadence2 (rpm)
+timestamp,time,duration,lat (deg),long (deg),distance (mi),altitude (ft),speed (mph),power (W),heart rate (bpm),temperature (F),power2 (W),cadence2 (rpm)
 2022-03-09T01:31:59.000Z,17:31:59,00:00:00,46.93865776062012,-121.53759598731995,0.00201324204,408.79266400000006,7.26334418,31,113,48.2,0,0
 2022-03-09T01:32:00.000Z,17:32:00,00:00:01,46.93865776062012,-121.53759598731995,0.0042253228,414.69817599999993,7.972454160000001,28,113,48.2,0,5
 2022-03-09T01:32:01.000Z,17:32:01,00:00:02,46.93865776062012,-121.53759598731995,0.00653060921,416.01051199999984,8.28562576,28,113,48.2,0,63

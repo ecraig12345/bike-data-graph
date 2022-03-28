@@ -16,6 +16,7 @@ describe('api/files/[...fileParts]', () => {
   });
 
   it('reads fit csv', async () => {
+    // hack: pass the API a relative path from the expected data root folder to the mock file
     const query: ReadFileQuery = { fileParts: filePaths.fromDataRoot(filePaths.fitCsv).split('/') };
     const req = mockRequest({ query });
     const res = mockResponse();
@@ -30,13 +31,13 @@ describe('api/files/[...fileParts]', () => {
       'timestamp',
       'time',
       'duration',
-      'position_lat (deg)',
-      'position_long (deg)',
+      'lat (deg)',
+      'long (deg)',
       'distance (mi)',
       'altitude (ft)',
       'speed (mph)',
       'power (W)',
-      'heart_rate (bpm)',
+      'heart rate (bpm)',
       'temperature (F)',
       'power2 (W)',
       'cadence2 (rpm)',
@@ -111,13 +112,13 @@ describe('api/files/[...fileParts]', () => {
       'timestamp',
       'time',
       'duration',
-      'position_lat (deg)',
-      'position_long (deg)',
+      'lat (deg)',
+      'long (deg)',
       'distance (mi)',
       'altitude (ft)',
       'speed (mph)',
       'power (W)',
-      'heart_rate (bpm)',
+      'heart rate (bpm)',
       'temperature (F)',
       'power2 (W)',
       'cadence2 (rpm)',

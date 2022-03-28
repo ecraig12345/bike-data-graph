@@ -33,15 +33,16 @@ describe('convertRecord', () => {
   it('converts fit record', () => {
     const record = parse(fitSample, parseOptions)[0];
     const result = convertRecord(record, state);
+    expect(state.warnedUnits.size).toBe(0);
     expect(numbersToFixed(result)).toMatchInlineSnapshot(`
       Object {
         "altitude (ft)": "416.0105",
         "cadence2 (rpm)": "35.0000",
         "distance (mi)": "0.0113",
         "duration": "00:00:00",
-        "heart_rate (bpm)": "113.0000",
-        "position_lat (deg)": "46.9387",
-        "position_long (deg)": "-121.5376",
+        "heart rate (bpm)": "113.0000",
+        "lat (deg)": "46.9387",
+        "long (deg)": "-121.5376",
         "power (W)": "17.0000",
         "power2 (W)": "60.0000",
         "speed (mph)": "8.6413",
@@ -55,6 +56,7 @@ describe('convertRecord', () => {
   it('converts velocomp record', () => {
     const record = parse(velocompSample, parseOptions)[0];
     const result = convertRecord(record, state);
+    expect(state.warnedUnits.size).toBe(0);
     expect(numbersToFixed(result)).toMatchInlineSnapshot(`
       Object {
         "distance (mi)": "0.0286",
@@ -70,5 +72,25 @@ describe('convertRecord', () => {
         "wind speed (mph)": "7.3573",
       }
     `);
+  });
+
+  test('duplicate field names in original data', () => {
+    // If there are originally duplicate field names in the data, the second field will overwrite
+    // the first during CSV parsing
+    const record = parse(['a,b,a', '1,2,3'].join('\n'), parseOptions)[0];
+    const result = convertRecord(record, state);
+    expect(state.warnedUnits.size).toBe(0);
+    expect(result).toEqual({ a: 3, b: 2 });
+  });
+
+  test('duplicate generated field names', () => {
+    // This is an obscure/unlikely case, so handling has been removed: if the same field name is
+    // present with different units or different casing, the second overwrites the first.
+    // Also with actual data, if the same thing was stored under two names in different units,
+    // it's probably the same value once converted.
+    const record = parse(['distance (m),distance (mi)', '1,2'].join('\n'), parseOptions)[0];
+    const result = convertRecord(record, state);
+    expect(state.warnedUnits.size).toBe(0);
+    expect(result).toEqual({ 'distance (mi)': 2 });
   });
 });

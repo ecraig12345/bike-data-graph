@@ -1,6 +1,5 @@
 import path from 'path';
-
-const dataRoot = path.resolve(__dirname, '../../data');
+import { dataRoot } from '../utils/server/constants';
 
 export const filePaths = {
   fitCsv: path.join(__dirname, 'mock.records_data.csv'),
@@ -8,6 +7,5 @@ export const filePaths = {
   /** random data */
   mysteryCsv: path.join(__dirname, 'mystery.csv'),
   convertedCsv: path.join(__dirname, 'converted.csv'),
-  dataRoot,
   fromDataRoot: (p: string) => path.relative(dataRoot, p),
 };
