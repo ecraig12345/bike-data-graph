@@ -21,7 +21,7 @@ const msInMinute = 60 * 1000;
 
 const className = mergeStyles({
   // original name
-  'td:first-child': { maxWidth: '35%', fontSize: '0.95em' },
+  'td:first-child': { width: '30%', wordBreak: 'break-all', fontSize: '0.95em' },
   // display name
   'td:nth-child(2)': { width: '30%' },
   // time field

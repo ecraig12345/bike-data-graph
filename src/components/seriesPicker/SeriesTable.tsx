@@ -18,7 +18,7 @@ const headers = ['Field', 'From file', 'Label', 'Smooth', 'Color', '', '', ''] a
 
 const className = mergeStyles({
   'th:first-child': { width: '20%' },
-  'td:nth-child(2)': { width: '25%', maxWidth: '25%', fontSize: '0.85em' },
+  'td:nth-child(2)': { width: '25%', wordBreak: 'break-all', fontSize: '0.85em' },
   'td:nth-last-child(2), td:nth-last-child(3)': { paddingRight: 0 },
 });
 

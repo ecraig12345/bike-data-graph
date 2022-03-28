@@ -13,6 +13,7 @@ const commonStyles: IStyle = {
 
 const rootClass = mergeStyles({
   width: '100%',
+  borderCollapse: 'collapse',
   ...nonCellStyles,
   ...commonStyles,
   'caption, tbody, thead': { ...nonCellStyles, ...commonStyles },
